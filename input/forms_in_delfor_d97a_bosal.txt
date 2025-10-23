@@ -1,0 +1,2496 @@
+#---------------------------------------------------------------------------------------------------------------#
+#                                                                                                               #
+#                                            EDIFACT - DELFOR 97A UN                                            #
+#                                                                                                               #
+#                                                  Axel Nefzer                                                  #
+#                            (c)2007 Business Technology Consulting AG, Neckarsulm                              #
+#---------------------------------------------------------------------------------------------------------------#
+#!FGFLAGS=1
+#
+#
+# Anpassung an die GM MGO Formatbeschreibung, nicht verwendete Segmente deaktiviert.
+#
+#
+# AENDERUNGEN:
+#
+#
+# - Split SG17 ueber den Qualifier des SCC-Segments
+#   SG17_A    -- SCC+1    firm
+#   SG17_A    -- SCC+4    forecast
+#   SG17_B    -- SCC+2    commitment for fabrication and material
+#   SG17_C    -- SCC+3    commitment for material
+#
+# - Im Segment DTM_13 sind alle Felder als Muss-Felder definiert.
+#   Abfrage und Abbildung erfolgt auf den Datumsqualifier.
+#
+#  
+#---------------------------------------------------------------------------------------------------------------#
+#        FILE                                                                                                   #
+#---------------------------------------------------------------------------------------------------------------#
+
+FILE.
+
+FILE    :
+        UNA            [0:"UNA"]         *    1
+        UNB            [0:"UNB"]         +    1
+        SG0            [0:"UNH"]         + 9999
+        UNZ            [0:"UNZ"]         +    1
+        ;
+
+SG0     :
+        UNH            [0:"UNH"]         +    1
+        BGM            [0:"BGM"]         +    1
+        DTM_01         [0:"DTM"]         +   10
+        FTX_01         [0:"FTX"]         *    5
+#        SG1            [0:"RFF"]         *   10
+        SG2            [0:"NAD"]         *   99
+#        SG5            [0:"TDT"]         *   10
+        SG6            [0:"GIS"]         * 9999
+        UNT            [0:"UNT"]         +    1
+        ;
+
+#SG1     :
+#        RFF_01         [0:"RFF"]         +    1
+#        DTM_02         [0:"DTM"]         *    1
+#        ;
+
+SG2     :
+        NAD_01         [0:"NAD"]         +    1
+#        SG3            [0:"RFF"]         *   10
+#        SG4            [0:"CTA"]         *    5
+        ;
+
+#SG3     :
+#        RFF_02         [0:"RFF"]         +    1
+#        DTM_03         [0:"DTM"]         *    1
+#        ;
+
+#SG4     :
+#        CTA_01         [0:"CTA"]         +    1
+#        COM_01         [0:"COM"]         *    5
+#        ;
+
+#SG5     :
+#        TDT_01         [0:"TDT"]         +    1
+#        DTM_04         [0:"DTM"]         *    5
+#        ;
+
+SG6     :
+        GIS            [0:"GIS"]         +    1
+        SG7            [0:"NAD"]         *    1
+        SG12           [0:"LIN"]         * 9999
+        ;
+
+SG7     :
+        NAD_02         [0:"NAD"]         +    1
+#        LOC_01         [0:"LOC"]         *   10
+#        FTX_02         [0:"FTX"]         *    5
+#        SG8            [0:"RFF"]         *   10
+#        SG9            [0:"DOC"]         *   10
+#        SG10           [0:"CTA"]         *    5
+#        SG11           [0:"TDT"]         *   10
+        ;
+
+#SG8     :
+#        RFF_03         [0:"RFF"]         +    1
+#        DTM_05         [0:"DTM"]         *    1
+#        ;
+
+#SG9     :
+#        DOC_01         [0:"DOC"]         +    1
+#        DTM_06         [0:"DTM"]         *   10
+#        ;
+
+#SG10    :
+#        CTA_02         [0:"CTA"]         +    1
+#        COM_02         [0:"COM"]         *    5
+#        ;
+
+#SG11    :
+#        TDT_02         [0:"TDT"]         +    1
+#        DTM_07         [0:"DTM"]         *    5
+#        ;
+
+SG12    :
+        LIN            [0:"LIN"]         +    1
+        PIA            [0:"PIA"]         *   10
+        IMD            [0:"IMD"]         *   10
+#        MEA_01         [0:"MEA"]         *    5
+#        ALI            [0:"ALI"]         *    5
+#        GIN_01         [0:"GIN"]         *  999
+#        GIR            [0:"GIR"]         *  999
+        LOC_02         [0:"LOC"]         *  999
+#        DTM_08         [0:"DTM"]         *    5
+        FTX_03         [0:"FTX"]         *    5
+        SG13           [0:"RFF"]         *   3
+#        SG14           [0:"TDT"]         *   10
+        SG15           [0:"QTY"]         *   10
+        SG17           [0:"SCC"]         *  999
+        SG20           [0:"PAC"]         *   99
+#        SG22           [0:"NAD"]         *  999
+        ;
+
+SG13     :
+         RFF_04        [0:"RFF"]         +    1
+         DTM_09        [0:"DTM"]         *    1
+         ;
+
+#SG14    :
+#        TDT_03         [0:"TDT"]         +    1
+#        DTM_10         [0:"DTM"]         *    5
+#        ;
+
+SG15    :
+        QTY_01         [0:"QTY"]         +    1
+        DTM_11         [0:"DTM"]         *    2
+        SG16           [0:"RFF"]         *    1
+        ;
+
+SG16    :
+        RFF_05         [0:"RFF"]         +    1
+        DTM_12         [0:"DTM"]         *    1
+        ;
+
+SG17    :
+        SG17a          [ ? ( KEY_EXISTS (0, "SCC+1") != 0 |
+                             KEY_EXISTS (0, "SCC+4") != 0 ) ] |
+        SG17b          [ ? ( KEY_EXISTS (0, "SCC+2") != 0 ) ] |
+        SG17c          [ ? ( KEY_EXISTS (0, "SCC+3") != 0 ) ] +    1
+        ;
+
+# SCC+1  firm
+# SCC+4  forecast
+# QTY+1  discrete quantity
+# QTY+83 backorder quantity
+# QTY+92 Final delivery quantity
+
+SG17a  :
+        SCC_01         [0:"SCC"]         +    1
+        SG18           [0:"QTY"]         *  999
+        ;
+
+SG18    :
+        QTY_02         [0:"QTY"]         +    1
+        DTM_13         [0:"DTM"]         *    2
+#        SG19           [0:"RFF"]         *   10
+        ;
+
+#SG19    :
+#        RFF_06         [0:"RFF"]         +    1
+#        DTM_14         [0:"DTM"]         *    1
+#        ;
+
+
+# SCC+2  commitment for fabrication and material
+# Fertigungsfreigabe
+SG17b   :
+        SCC_01b        [0:"SCC"]         +    1
+        SG18b          [0:"QTY"]         *  999
+        ;
+
+SG18b   :
+        QTY_02b        [0:"QTY"]         +    1
+        DTM_13b        [0:"DTM"]         *    2
+        ;
+
+
+# SCC+3  commitment for material
+# Materialfreigabe
+SG17c   :
+        SCC_01c        [0:"SCC"]         +    1
+        SG18c          [0:"QTY"]         *  999
+        ;
+
+SG18c   :
+        QTY_02c        [0:"QTY"]         +    1
+        DTM_13c        [0:"DTM"]         *    2
+        ;
+
+SG20    :
+        PAC            [0:"PAC"]         +    1
+#        MEA_02         [0:"MEA"]         *   10
+        QTY_03         [0:"QTY"]         *    5
+#        DTM_15         [0:"DTM"]         *    5
+#        SG21           [0:"PCI"]         *   10
+        ;
+
+#SG21    :
+#        PCI
+#        GIN_02         [0:"GIN"]         *   10
+#        ;
+
+#SG22    :
+#        NAD_03
+#        LOC_03         [0:"LOC"]         *   10
+#        FTX_04         [0:"FTX"]         *    5
+#        SG23           [0:"DOC"]         *   10
+#        SG24           [0:"CTA"]         *    5
+#        SG25           [0:"QTY"]         *   10
+#        SG27           [0:"SCC"]         *  999
+#        SG30           [0:"TDT"]         *   10
+#        ;
+
+#SG23    :
+#        DOC_02
+#        DTM_16         [0:"DTM"]         *    1
+#        ;
+
+#SG24    :
+#        CTA_03
+#        COM_03         [0:"COM"]         *    5
+#        ;
+
+#SG25    :
+#        QTY_04
+#        DTM_17         [0:"DTM"]         *    2
+#        SG26           [0:"RFF"]         *   10
+#        ;
+
+#SG26    :
+#        RFF_07
+#        DTM_18         [0:"DTM"]         *    1
+#        ;
+
+#SG27    :
+#        SCC_02
+#        SG28           [0:"QTY"]         +  999
+#        ;
+
+#SG28    :
+#        QTY_05
+#        DTM_19         [0:"DTM"]         *    2
+#        SG29           [0:"RFF"]         *   10
+#        ;
+
+#SG29    :
+#        RFF_08
+#        DTM_20         [0:"DTM"]         *    1
+#        ;
+
+#SG30    :
+#        TDT_04
+#        DTM_21          [0:"DTM"]         *    5
+#        ;
+
+#---------------------------------------------------------------------------------------------------------------#
+#         Segmente                                                                                              #
+#---------------------------------------------------------------------------------------------------------------#
+#       ALI             Additional information                                                                  #
+#---------------------------------------------------------------------------------------------------------------#
+#ALI {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idALI           +    1
+#        ALI_3239        *    1
+#        ALI_9213        *    1
+#        ALI_4183_01     *    1
+#        ALI_4183_02     *    1
+#        ALI_4183_03     *    1
+#        ALI_4183_04     *    1
+#        ALI_4183_05     *    1;
+#
+#idALI           :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "ALI"};
+#ALI_3239        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep};
+#ALI_9213        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep};
+#ALI_4183_01     :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep};
+#ALI_4183_02     :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep};
+#ALI_4183_03     :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep};
+#ALI_4183_04     :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep};
+#ALI_4183_05     :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       BGM             Beginning of message                                                                    #
+#---------------------------------------------------------------------------------------------------------------#
+BGM         {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+        idBGM           +    1
+        BGM_C002        *    1
+        BGM_C106        *    1
+        BGM_1225        *    1
+        BGM_4343        *    1;
+
+BGM_C002         {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        BGM_1001        *    1
+        BGM_1131        *    1
+        BGM_3055        *    1
+        BGM_1000        *    1;
+
+BGM_C106         {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        BGM_1004        *    1
+        BGM_1056        *    1
+        BGM_1060        *    1;
+
+idBGM           :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "BGM"};
+BGM_1001        :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+BGM_1131        :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+BGM_3055        :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+BGM_1000        :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+BGM_1004        :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+BGM_1056        :  STRINGA {MAXLENGTH =  9, DELIMITER = Comp_Sep};
+BGM_1060        :  STRINGA {MAXLENGTH =  6, DELIMITER = Comp_Sep};
+BGM_1225        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep};
+BGM_4343        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep};
+
+#---------------------------------------------------------------------------------------------------------------#
+#       COM_01          Kommunikationsverbindung                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+#COM_01 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idCOM_01        +    1
+#        COM_01_C076     =    1;
+#
+#COM_01_C076 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        COM_01_3148     =    1
+#        COM_01_3155     =    1;
+#
+#COM_01_3148 {DELIMITER = Comp_Sep}:
+#        COM_01_3148_01  =    1
+#        COM_01_3148_02  *    1
+#        COM_01_3148_03  *    1;
+#
+#idCOM_01        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "COM"};
+#COM_01_3148_01  :  STRINGA {MAXLENGTH =250};
+#COM_01_3148_02  :  STRINGA {MAXLENGTH =250};
+#COM_01_3148_03  :  STRINGA {MAXLENGTH = 12};
+#COM_01_3155     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       COM_02          Kommunikationsverbindung                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+#COM_02 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idCOM_02        +    1
+#        COM_02_C076     =    1;
+#
+#COM_02_C076 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        COM_02_3148     =    1
+#        COM_02_3155     =    1;
+#
+#COM_02_3148 {DELIMITER = Comp_Sep}:
+#        COM_02_3148_01  =    1
+#        COM_02_3148_02  *    1
+#        COM_02_3148_03  *    1;
+#
+#idCOM_02        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "COM"};
+#COM_02_3148_01  :  STRINGA {MAXLENGTH =250};
+#COM_02_3148_02  :  STRINGA {MAXLENGTH =250};
+#COM_02_3148_03  :  STRINGA {MAXLENGTH = 12};
+#COM_02_3155     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       COM_03          Kommunikationsverbindung                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+#COM_03 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idCOM_03        +    1
+#        COM_03_C076     =    1;
+#
+#COM_03_C076 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        COM_03_3148     =    1
+#        COM_03_3155     =    1;
+#
+#COM_03_3148 {DELIMITER = Comp_Sep}:
+#        COM_03_3148_01  =    1
+#        COM_03_3148_02  *    1
+#        COM_03_3148_03  *    1;
+#
+#idCOM_03        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "COM"};
+#COM_03_3148_01  :  STRINGA {MAXLENGTH =250};
+#COM_03_3148_02  :  STRINGA {MAXLENGTH =250};
+#COM_03_3148_03  :  STRINGA {MAXLENGTH = 12};
+#COM_03_3155     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       CTA_01          Contact information                                                                     #
+#---------------------------------------------------------------------------------------------------------------#
+#CTA_01 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idCTA_01        +    1
+#        CTA_01_3139     *    1
+#        CTA_01_C056     *    1;
+#
+#CTA_01_C056         {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        CTA_01_3413     *    1
+#        CTA_01_3412     *    1;
+#
+#idCTA_01        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "CTA"};
+#CTA_01_3139     :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep};
+#CTA_01_3413     :  STRINGA {MAXLENGTH = 17, DELIMITER = Comp_Sep};
+#CTA_01_3412     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       CTA_02          Contact information                                                                     #
+#---------------------------------------------------------------------------------------------------------------#
+#CTA_02 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idCTA_02        +    1
+#        CTA_02_3139     *    1
+#        CTA_02_C056     *    1;
+#
+#CTA_02_C056         {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        CTA_02_3413     *    1
+#        CTA_02_3412     *    1;
+#
+#idCTA_02        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "CTA"};
+#CTA_02_3139     :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep};
+#CTA_02_3413     :  STRINGA {MAXLENGTH = 17, DELIMITER = Comp_Sep};
+#CTA_02_3412     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       CTA_03          Contact information                                                                     #
+#---------------------------------------------------------------------------------------------------------------#
+#CTA_03 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idCTA_03        +    1
+#        CTA_03_3139     *    1
+#        CTA_03_C056     *    1;
+#
+#CTA_03_C056 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        CTA_03_3413     *    1
+#        CTA_03_3412     *    1;
+#
+#idCTA_03        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "CTA"};
+#CTA_03_3139     :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep};
+#CTA_03_3413     :  STRINGA {MAXLENGTH = 17, DELIMITER = Comp_Sep};
+#CTA_03_3412     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       DOC_01          Dokument-/Nachricht-Einzelheiten                                                        #
+#---------------------------------------------------------------------------------------------------------------#
+#DOC_01 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idDOC_01        +    1
+#        DOC_01_C002     +    1
+#        DOC_01_C503     *    1
+#        DOC_01_3153     *    1
+#        DOC_01_1220     *    1
+#        DOC_01_1218     *    1;
+#
+#DOC_01_C002 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        DOC_01_1001     *    1
+#        DOC_01_1131     *    1
+#        DOC_01_3055     *    1
+#        DOC_01_1000     *    1;
+#
+#DOC_01_C503 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        DOC_01_1004     *    1
+#        DOC_01_1373     *    1
+#        DOC_01_1366     *    1
+#        DOC_01_3453     *    1;
+#
+#idDOC_01        :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep, DEFAULT = "DOC"};
+#DOC_01_1001     :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+#DOC_01_1131     :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+#DOC_01_3055     :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+#DOC_01_1000     :  STRINGA {MAXLENGTH =  35, DELIMITER = Comp_Sep};
+#DOC_01_1004     :  STRINGA {MAXLENGTH =  35, DELIMITER = Comp_Sep};
+#DOC_01_1373     :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+#DOC_01_1366     :  STRINGA {MAXLENGTH =  70, DELIMITER = Comp_Sep};
+#DOC_01_3453     :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+#DOC_01_3153     :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep};
+#DOC_01_1220     : NSTRINGA {MAXLENGTH =   2, DELIMITER = Data_Sep};
+#DOC_01_1218     : NSTRINGA {MAXLENGTH =   2, DELIMITER = Data_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       DOC_02          Dokument-/Nachricht-Einzelheiten                                                        #
+#---------------------------------------------------------------------------------------------------------------#
+#DOC_02 {DELIMITER = Seg_Terminator, ESCAPE= Release_Ind, SHORTEN = Data_Sep}:
+#        idDOC_02        +    1
+#        DOC_02_C002     +    1
+#        DOC_02_C503     *    1
+#        DOC_02_3153     *    1
+#        DOC_02_1220     *    1
+#        DOC_02_1218     *    1;
+#
+#DOC_02_C002 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        DOC_02_1001     *    1
+#        DOC_02_1131     *    1
+#        DOC_02_3055     *    1
+#        DOC_02_1000     *    1;
+#
+#DOC_02_C503 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        DOC_02_1004     *    1
+#        DOC_02_1373     *    1
+#        DOC_02_1366     *    1
+#        DOC_02_3453     *    1;
+#
+#idDOC_02        :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep,DEFAULT = "DOC"};
+#DOC_02_1001     :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+#DOC_02_1131     :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+#DOC_02_3055     :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+#DOC_02_1000     :  STRINGA {MAXLENGTH =  35, DELIMITER = Comp_Sep};
+#DOC_02_1004     :  STRINGA {MAXLENGTH =  35, DELIMITER = Comp_Sep};
+#DOC_02_1373     :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+#DOC_02_1366     :  STRINGA {MAXLENGTH =  70, DELIMITER = Comp_Sep};
+#DOC_02_3453     :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+#DOC_02_3153     :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep};
+#DOC_02_1220     : NSTRINGA {MAXLENGTH =   2, DELIMITER = Data_Sep};
+#DOC_02_1218     : NSTRINGA {MAXLENGTH =   2, DELIMITER = Data_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       DTM_01          Datum/Uhrzeit/Zeitspanne                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+DTM_01 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+        idDTM_01
+        DTM_01_C507     =    1;
+
+DTM_01_C507 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        DTM_01_2005     =    1
+        DTM_01_2380     *    1
+        DTM_01_2379     *    1;
+
+idDTM_01        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "DTM"};
+DTM_01_2005     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+DTM_01_2380     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+DTM_01_2379     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+
+#---------------------------------------------------------------------------------------------------------------#
+#       DTM_02          Datum/Uhrzeit/Zeitspanne                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+#DTM_02 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idDTM_02
+#        DTM_02_C507     =    1;
+#
+#DTM_02_C507 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        DTM_02_2005     =    1
+#        DTM_02_2380     *    1
+#        DTM_02_2379     *    1;
+#
+#idDTM_02        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "DTM"};
+#DTM_02_2005     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#DTM_02_2380     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#DTM_02_2379     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       DTM_03          Datum/Uhrzeit/Zeitspanne                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+#DTM_03 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idDTM_03
+#        DTM_03_C507     =    1;
+#
+#DTM_03_C507 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        DTM_03_2005     =    1
+#        DTM_03_2380     *    1
+#        DTM_03_2379     *    1;
+#
+#idDTM_03        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "DTM"};
+#DTM_03_2005     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#DTM_03_2380     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#DTM_03_2379     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       DTM_04          Datum/Uhrzeit/Zeitspanne                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+#DTM_04 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idDTM_04
+#        DTM_04_C507     =    1;
+#
+#DTM_04_C507 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        DTM_04_2005     =    1
+#        DTM_04_2380     *    1
+#        DTM_04_2379     *    1;
+#
+#idDTM_04        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "DTM"};
+#DTM_04_2005     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#DTM_04_2380     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#DTM_04_2379     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       DTM_05          Datum/Uhrzeit/Zeitspanne                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+#DTM_05 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idDTM_05
+#        DTM_05_C507     =    1;
+#
+#DTM_05_C507 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        DTM_05_2005     =    1
+#        DTM_05_2380     *    1
+#        DTM_05_2379     *    1;
+#
+#idDTM_05        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "DTM"};
+#DTM_05_2005     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#DTM_05_2380     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#DTM_05_2379     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       DTM_06          Datum/Uhrzeit/Zeitspanne                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+#DTM_06 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idDTM_06
+#        DTM_06_C507     =    1;
+#
+#DTM_06_C507 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        DTM_06_2005     =    1
+#        DTM_06_2380     *    1
+#        DTM_06_2379     *    1;
+#
+#idDTM_06        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "DTM"};
+#DTM_06_2005     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#DTM_06_2380     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#DTM_06_2379     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       DTM_07          Datum/Uhrzeit/Zeitspanne                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+#DTM_07 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idDTM_07
+#        DTM_07_C507     =    1;
+#
+#DTM_07_C507 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        DTM_07_2005     =    1
+#        DTM_07_2380     *    1
+#        DTM_07_2379     *    1;
+#
+#idDTM_07        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "DTM"};
+#DTM_07_2005     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#DTM_07_2380     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#DTM_07_2379     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       DTM_08          Datum/Uhrzeit/Zeitspanne                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+#DTM_08 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idDTM_08
+#        DTM_08_C507     =    1;
+#
+#DTM_08_C507 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        DTM_08_2005     =    1
+#        DTM_08_2380     *    1
+#        DTM_08_2379     *    1;
+#
+#idDTM_08        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "DTM"};
+#DTM_08_2005     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#DTM_08_2380     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#DTM_08_2379     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       DTM_09          Datum/Uhrzeit/Zeitspanne                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+DTM_09 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+        idDTM_09
+        DTM_09_C507     =    1;
+
+DTM_09_C507 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        DTM_09_2005     =    1
+        DTM_09_2380     *    1
+        DTM_09_2379     *    1;
+
+idDTM_09        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "DTM"};
+DTM_09_2005     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+DTM_09_2380     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+DTM_09_2379     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+
+#---------------------------------------------------------------------------------------------------------------#
+#       DTM_10          Datum/Uhrzeit/Zeitspanne                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+#DTM_10 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idDTM_10
+#        DTM_10_C507     =    1;
+#
+#DTM_10_C507 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        DTM_10_2005     =    1
+#        DTM_10_2380     *    1
+#        DTM_10_2379     *    1;
+#
+#idDTM_10        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "DTM"};
+#DTM_10_2005     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#DTM_10_2380     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#DTM_10_2379     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       DTM_11          Datum/Uhrzeit/Zeitspanne                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+DTM_11 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+        idDTM_11
+        DTM_11_C507     =    1;
+
+DTM_11_C507 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        DTM_11_2005     =    1
+        DTM_11_2380     *    1
+        DTM_11_2379     *    1;
+
+idDTM_11        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "DTM"};
+DTM_11_2005     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+DTM_11_2380     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+DTM_11_2379     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+
+#---------------------------------------------------------------------------------------------------------------#
+#       DTM_12          Datum/Uhrzeit/Zeitspanne                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+DTM_12 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+        idDTM_12
+        DTM_12_C507     =    1;
+
+DTM_12_C507 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        DTM_12_2005     =    1
+        DTM_12_2380     *    1
+        DTM_12_2379     *    1;
+
+idDTM_12        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "DTM"};
+DTM_12_2005     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+DTM_12_2380     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+DTM_12_2379     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+
+#---------------------------------------------------------------------------------------------------------------#
+#       DTM_13          Datum/Uhrzeit/Zeitspanne                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+DTM_13 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+        idDTM_13
+        DTM_13_C507     =    1;
+
+DTM_13_C507 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        DTM_13_2005     =    1
+        DTM_13_2380     +    1
+        DTM_13_2379     +    1;
+
+idDTM_13        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "DTM"};
+DTM_13_2005     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+DTM_13_2380     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+DTM_13_2379     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+
+#---------------------------------------------------------------------------------------------------------------#
+#       DTM_13b         Datum/Uhrzeit/Zeitspanne                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+DTM_13b {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+        idDTM_13b
+        DTM_13b_C507    =    1;
+
+DTM_13b_C507 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        DTM_13b_2005    =    1
+        DTM_13b_2380    *    1
+        DTM_13b_2379    *    1;
+
+idDTM_13b       :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "DTM"};
+DTM_13b_2005    :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+DTM_13b_2380    :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+DTM_13b_2379    :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+
+#---------------------------------------------------------------------------------------------------------------#
+#       DTM_13c         Datum/Uhrzeit/Zeitspanne                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+DTM_13c {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+        idDTM_13c
+        DTM_13c_C507    =    1;
+
+DTM_13c_C507 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        DTM_13c_2005    =    1
+        DTM_13c_2380    *    1
+        DTM_13c_2379    *    1;
+
+idDTM_13c       :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "DTM"};
+DTM_13c_2005    :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+DTM_13c_2380    :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+DTM_13c_2379    :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+
+#---------------------------------------------------------------------------------------------------------------#
+#       DTM_14          Datum/Uhrzeit/Zeitspanne                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+#DTM_14 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idDTM_14
+#        DTM_14_C507     =    1;
+#
+#DTM_14_C507 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        DTM_14_2005     =    1
+#        DTM_14_2380     *    1
+#        DTM_14_2379     *    1;
+#
+#idDTM_14        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "DTM"};
+#DTM_14_2005     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#DTM_14_2380     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#DTM_14_2379     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       DTM_15          Datum/Uhrzeit/Zeitspanne                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+#DTM_15 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idDTM_15
+#        DTM_15_C507     =    1;
+#
+#DTM_15_C507 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        DTM_15_2005     =    1
+#        DTM_15_2380     *    1
+#        DTM_15_2379     *    1;
+#
+#idDTM_15        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "DTM"};
+#DTM_15_2005     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#DTM_15_2380     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#DTM_15_2379     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       DTM_16          Datum/Uhrzeit/Zeitspanne                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+#DTM_16 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idDTM_16
+#        DTM_16_C507     =    1;
+#
+#DTM_16_C507 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        DTM_16_2005     =    1
+#        DTM_16_2380     *    1
+#        DTM_16_2379     *    1;
+#
+#idDTM_16        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "DTM"};
+#DTM_16_2005     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#DTM_16_2380     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#DTM_16_2379     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       DTM_17          Datum/Uhrzeit/Zeitspanne                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+#DTM_17 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idDTM_17
+#        DTM_17_C507     =    1;
+#
+#DTM_17_C507 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        DTM_17_2005     =    1
+#        DTM_17_2380     *    1
+#        DTM_17_2379     *    1;
+#
+#idDTM_17        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "DTM"};
+#DTM_17_2005     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#DTM_17_2380     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#DTM_17_2379     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       DTM_18          Datum/Uhrzeit/Zeitspanne                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+#DTM_18 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idDTM_18
+#        DTM_18_C507     =    1;
+#
+#DTM_18_C507 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        DTM_18_2005     =    1
+#        DTM_18_2380     *    1
+#        DTM_18_2379     *    1;
+#
+#idDTM_18        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "DTM"};
+#DTM_18_2005     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#DTM_18_2380     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#DTM_18_2379     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       DTM_19          Datum/Uhrzeit/Zeitspanne                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+#DTM_19 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idDTM_19
+#        DTM_19_C507     =    1;
+#
+#DTM_19_C507 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        DTM_19_2005     =    1
+#        DTM_19_2380     *    1
+#        DTM_19_2379     *    1;
+#
+#idDTM_19        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "DTM"};
+#DTM_19_2005     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#DTM_19_2380     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#DTM_19_2379     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       DTM_20          Datum/Uhrzeit/Zeitspanne                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+#DTM_20 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idDTM_20
+#        DTM_20_C507     =    1;
+#
+#DTM_20_C507 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        DTM_20_2005     =    1
+#        DTM_20_2380     *    1
+#        DTM_20_2379     *    1;
+#
+#idDTM_20        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "DTM"};
+#DTM_20_2005     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#DTM_20_2380     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#DTM_20_2379     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       DTM_21          Datum/Uhrzeit/Zeitspanne                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+#DTM_21 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idDTM_21
+#        DTM_21_C507     =    1;
+#
+#DTM_21_C507 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        DTM_21_2005     =    1
+#        DTM_21_2380     *    1
+#        DTM_21_2379     *    1;
+#
+#idDTM_21        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "DTM"};
+#DTM_21_2005     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#DTM_21_2380     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#DTM_21_2379     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       FTX_01          Freier Text                                                                             #
+#---------------------------------------------------------------------------------------------------------------#
+FTX_01 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+        idFTX_01        +    1
+        FTX_01_4451     +    1
+        FTX_01_4453     *    1
+        FTX_01_C107     *    1
+        FTX_01_C108     *    1
+        FTX_01_3453     *    1
+        FTX_01_4447     *    1;
+
+FTX_01_C107 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        FTX_01_4441     +    1
+        FTX_01_1131     *    1
+        FTX_01_3055     *    1;
+
+FTX_01_C108 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        FTX_01_4440     +    5;
+#        FTX_01_4440_01  +    1
+#        FTX_01_4440_02  *    1
+#        FTX_01_4440_03  *    1
+#        FTX_01_4440_04  *    1
+#        FTX_01_4440_05  *    1;
+
+idFTX_01        :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep, DEFAULT = "FTX"};
+FTX_01_4451     :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep};
+FTX_01_4453     :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep};
+FTX_01_4441     :  STRINGA {MAXLENGTH =  17, DELIMITER = Comp_Sep};
+FTX_01_1131     :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+FTX_01_3055     :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+FTX_01_4440     :  STRINGA {MAXLENGTH = 250, DELIMITER = Comp_Sep};
+#FTX_01_4440_01  :  STRINGA {MAXLENGTH = 250, DELIMITER = Comp_Sep};
+#FTX_01_4440_02  :  STRINGA {MAXLENGTH = 250, DELIMITER = Comp_Sep};
+#FTX_01_4440_03  :  STRINGA {MAXLENGTH = 250, DELIMITER = Comp_Sep};
+#FTX_01_4440_04  :  STRINGA {MAXLENGTH = 250, DELIMITER = Comp_Sep};
+#FTX_01_4440_05  :  STRINGA {MAXLENGTH = 250, DELIMITER = Comp_Sep};
+FTX_01_3453     :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep};
+FTX_01_4447     :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep};
+
+#---------------------------------------------------------------------------------------------------------------#
+#       FTX_02          Freier Text                                                                             #
+#---------------------------------------------------------------------------------------------------------------#
+#FTX_02 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idFTX_02        +    1
+#        FTX_02_4451     +    1
+#        FTX_02_4453     *    1
+#        FTX_02_C107     *    1
+#        FTX_02_C108     *    1
+#        FTX_02_3453     *    1
+#        FTX_02_4447     *    1;
+#
+#FTX_02_C107 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        FTX_02_4441     +    1
+#        FTX_02_1131     *    1
+#        FTX_02_3055     *    1;
+#
+#FTX_02_C108 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        FTX_02_4440_01  +    1
+#        FTX_02_4440_02  *    1
+#        FTX_02_4440_03  *    1
+#        FTX_02_4440_04  *    1
+#        FTX_02_4440_05  *    1;
+#
+#idFTX_02        :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep, DEFAULT = "FTX"};
+#FTX_02_4451     :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep};
+#FTX_02_4453     :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep};
+#FTX_02_4441     :  STRINGA {MAXLENGTH =  17, DELIMITER = Comp_Sep};
+#FTX_02_1131     :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+#FTX_02_3055     :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+#FTX_02_4440_01  :  STRINGA {MAXLENGTH = 250, DELIMITER = Comp_Sep};
+#FTX_02_4440_02  :  STRINGA {MAXLENGTH = 250, DELIMITER = Comp_Sep};
+#FTX_02_4440_03  :  STRINGA {MAXLENGTH = 250, DELIMITER = Comp_Sep};
+#FTX_02_4440_04  :  STRINGA {MAXLENGTH = 250, DELIMITER = Comp_Sep};
+#FTX_02_4440_05  :  STRINGA {MAXLENGTH = 250, DELIMITER = Comp_Sep};
+#FTX_02_3453     :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep};
+#FTX_02_4447     :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       FTX_03          Freier Text                                                                             #
+#---------------------------------------------------------------------------------------------------------------#
+FTX_03 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+        idFTX_03        +    1
+        FTX_03_4451     +    1
+        FTX_03_4453     *    1
+        FTX_03_C107     *    1
+        FTX_03_C108     *    1
+        FTX_03_3453     *    1
+        FTX_03_4447     *    1;
+
+FTX_03_C107 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        FTX_03_4441     +    1
+        FTX_03_1131     *    1
+        FTX_03_3055     *    1;
+
+FTX_03_C108 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        FTX_03_4440_01  +    1
+        FTX_03_4440_02  *    1
+        FTX_03_4440_03  *    1
+        FTX_03_4440_04  *    1
+        FTX_03_4440_05  *    1;
+
+idFTX_03        :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep, DEFAULT = "FTX"};
+FTX_03_4451     :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep};
+FTX_03_4453     :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep};
+FTX_03_4441     :  STRINGA {MAXLENGTH =  17, DELIMITER = Comp_Sep};
+FTX_03_1131     :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+FTX_03_3055     :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+FTX_03_4440_01  :  STRINGA {MAXLENGTH = 250, DELIMITER = Comp_Sep};
+FTX_03_4440_02  :  STRINGA {MAXLENGTH = 250, DELIMITER = Comp_Sep};
+FTX_03_4440_03  :  STRINGA {MAXLENGTH = 250, DELIMITER = Comp_Sep};
+FTX_03_4440_04  :  STRINGA {MAXLENGTH = 250, DELIMITER = Comp_Sep};
+FTX_03_4440_05  :  STRINGA {MAXLENGTH = 250, DELIMITER = Comp_Sep};
+FTX_03_3453     :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep};
+FTX_03_4447     :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep};
+
+#---------------------------------------------------------------------------------------------------------------#
+#       FTX_04          Freier Text                                                                             #
+#---------------------------------------------------------------------------------------------------------------#
+#FTX_04 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idFTX_04        +    1
+#        FTX_04_4451     +    1
+#        FTX_04_4453     *    1
+#        FTX_04_C107     *    1
+#        FTX_04_C108     *    1
+#        FTX_04_3453     *    1
+#        FTX_04_4447     *    1;
+#
+#FTX_04_C107 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        FTX_04_4441     +    1
+#        FTX_04_1131     *    1
+#        FTX_04_3055     *    1;
+#
+#FTX_04_C108 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        FTX_04_4440_01  +    1
+#        FTX_04_4440_02  *    1
+#        FTX_04_4440_03  *    1
+#        FTX_04_4440_04  *    1
+#        FTX_04_4440_05  *    1;
+#
+#idFTX_04        :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep, DEFAULT = "FTX"};
+#FTX_04_4451     :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep};
+#FTX_04_4453     :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep};
+#FTX_04_4441     :  STRINGA {MAXLENGTH =  17, DELIMITER = Comp_Sep};
+#FTX_04_1131     :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+#FTX_04_3055     :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+#FTX_04_4440_01  :  STRINGA {MAXLENGTH = 250, DELIMITER = Comp_Sep};
+#FTX_04_4440_02  :  STRINGA {MAXLENGTH = 250, DELIMITER = Comp_Sep};
+#FTX_04_4440_03  :  STRINGA {MAXLENGTH = 250, DELIMITER = Comp_Sep};
+#FTX_04_4440_04  :  STRINGA {MAXLENGTH = 250, DELIMITER = Comp_Sep};
+#FTX_04_4440_05  :  STRINGA {MAXLENGTH = 250, DELIMITER = Comp_Sep};
+#FTX_04_3453     :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep};
+#FTX_04_4447     :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       GIN_01          Waren-Identifikationsnummer                                                             #
+#---------------------------------------------------------------------------------------------------------------#
+#GIN_01 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idGIN_01
+#        GIN_01_7405     =    1
+#        GIN_01_C208_01  =    1
+#        GIN_01_C208_02  *    1
+#        GIN_01_C208_03  *    1
+#        GIN_01_C208_04  *    1
+#        GIN_01_C208_05  *    1;
+#
+#GIN_01_C208_01 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        GIN_01_7402_01  =    1
+#        GIN_01_7402_02  *    1;
+#
+#GIN_01_C208_02 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        GIN_01_7402_03  =    1
+#        GIN_01_7402_04  *    1;
+#
+#GIN_01_C208_03 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        GIN_01_7402_05  =    1
+#        GIN_01_7402_06  *    1;
+#
+#GIN_01_C208_04 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        GIN_01_7402_07  =    1
+#        GIN_01_7402_08  *    1;
+#
+#GIN_01_C208_05 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        GIN_01_7402_09  =    1
+#        GIN_01_7402_10  *    1;
+#
+#idGIN_01        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "GIN"};
+#GIN_01_7405     :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep};
+#GIN_01_7402_01  :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#GIN_01_7402_02  :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#GIN_01_7402_03  :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#GIN_01_7402_04  :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#GIN_01_7402_05  :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#GIN_01_7402_06  :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#GIN_01_7402_07  :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#GIN_01_7402_08  :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#GIN_01_7402_09  :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#GIN_01_7402_10  :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       GIN_02          Waren-Identifikationsnummer                                                             #
+#---------------------------------------------------------------------------------------------------------------#
+#GIN_02 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idGIN_02
+#        GIN_02_7405     =    1
+#        GIN_02_C208_01  =    1
+#        GIN_02_C208_02  *    1
+#        GIN_02_C208_03  *    1
+#        GIN_02_C208_04  *    1
+#        GIN_02_C208_05  *    1;
+#
+#GIN_02_C208_01 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        GIN_02_7402_01  =    1
+#        GIN_02_7402_02  *    1;
+#
+#GIN_02_C208_02 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        GIN_02_7402_03  =    1
+#        GIN_02_7402_04  *    1;
+#
+#GIN_02_C208_03 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        GIN_02_7402_05  =    1
+#        GIN_02_7402_06  *    1;
+#
+#GIN_02_C208_04 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        GIN_02_7402_07  =    1
+#        GIN_02_7402_08  *    1;
+#
+#GIN_02_C208_05 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        GIN_02_7402_09  =    1
+#        GIN_02_7402_10  *    1;
+#
+#idGIN_02        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "GIN"};
+#GIN_02_7405     :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep};
+#GIN_02_7402_01  :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#GIN_02_7402_02  :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#GIN_02_7402_03  :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#GIN_02_7402_04  :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#GIN_02_7402_05  :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#GIN_02_7402_06  :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#GIN_02_7402_07  :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#GIN_02_7402_08  :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#GIN_02_7402_09  :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#GIN_02_7402_10  :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       GIR_01          Identifikationsnummern                                                                  #
+#---------------------------------------------------------------------------------------------------------------#
+#GIR_01 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idGIR_01
+#        GIR_01_7297     =    1
+#        GIR_01_C206_01  =    1
+#        GIR_01_C206_02  *    1
+#        GIR_01_C206_03  *    1
+#        GIR_01_C206_04  *    1
+#        GIR_01_C206_05  *    1;
+#
+#GIR_01_C206_01 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        GIR_01_7402_01  =    1
+#        GIR_01_7405_01  *    1
+#        GIR_01_4405_01  *    1;
+#
+#GIR_01_C206_02 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        GIR_01_7402_02  =    1
+#        GIR_01_7405_02  *    1
+#        GIR_01_4405_02  *    1;
+#
+#GIR_01_C206_03 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        GIR_01_7402_03  =    1
+#        GIR_01_7405_03  *    1
+#        GIR_01_4405_03  *    1;
+#
+#GIR_01_C206_04 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        GIR_01_7402_04  =    1
+#        GIR_01_7405_04  *    1
+#        GIR_01_4405_04  *    1;
+#
+#GIR_01_C206_05 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        GIR_01_7402_05  =    1
+#        GIR_01_7405_05  *    1
+#        GIR_01_4405_05  *    1;
+#
+#idGIR_01        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "GIR"};
+#GIR_01_7297     :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "3"};
+#GIR_01_7402_01  :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#GIR_01_7405_01  :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#GIR_01_4405_01  :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#GIR_01_7402_02  :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#GIR_01_7405_02  :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#GIR_01_4405_02  :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#GIR_01_7402_03  :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#GIR_01_7405_03  :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#GIR_01_4405_03  :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#GIR_01_7402_04  :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#GIR_01_7405_04  :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#GIR_01_4405_04  :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#GIR_01_7402_05  :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#GIR_01_7405_05  :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#GIR_01_4405_05  :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       GIS             Allgemeiner Indikator                                                                   #
+#---------------------------------------------------------------------------------------------------------------#
+SEGMENT GIS {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+        idGIS           +    1
+        GIS_C529        +    1;
+
+GIS_C529 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        GIS_7365        +    1
+        GIS_1131        *    1
+        GIS_3055        *    1
+        GIS_7187        *    1;
+
+idGIS           :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep, DEFAULT = "GIS"};
+GIS_7365        :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+GIS_1131        :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+GIS_3055        :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+GIS_7187        :  STRINGA {MAXLENGTH =  17, DELIMITER = Comp_Sep};
+
+#---------------------------------------------------------------------------------------------------------------#
+#       IMD             Produkt- / Leistungsbeschreibung                                                        #
+#---------------------------------------------------------------------------------------------------------------#
+IMD {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+        idIMD
+        IMD_7077        *    1
+        IMD_7081        *    1
+        IMD_C273        *    1
+        IMD_7383        *    1;
+
+IMD_C273 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        IMD_7009        *    1
+        IMD_1131        *    1
+        IMD_3055        *    1
+        IMD_7008_01     *    1
+        IMD_7008_02     *    1
+        IMD_3453        *    1;
+
+idIMD           :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "IMD"};
+IMD_7077        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep};
+IMD_7081        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep};
+IMD_7009        :  STRINGA {MAXLENGTH = 17, DELIMITER = Comp_Sep};
+IMD_1131        :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+IMD_3055        :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+IMD_7008_01     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+IMD_7008_02     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+IMD_3453        :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+IMD_7383        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep};
+
+#---------------------------------------------------------------------------------------------------------------#
+#       LIN             Positionsdaten                                                                          #
+#---------------------------------------------------------------------------------------------------------------#
+LIN {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+        idLIN
+        LIN_1082_01     *    1
+        LIN_1229        *    1
+        LIN_C212        *    1
+        LIN_C829        *    1
+        LIN_1222        *    1
+        LIN_7083        *    1;
+
+LIN_C212 {DELIMITER = Data_Sep,SHORTEN = Comp_Sep}:
+        LIN_7140        *    1
+        LIN_7143        *    1
+        LIN_1131        *    1
+        LIN_3055        *    1;
+
+LIN_C829 {DELIMITER = Data_Sep,SHORTEN = Comp_Sep}:
+        LIN_5495        *    1
+        LIN_1082_02     *    1;
+
+idLIN           :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "LIN"};
+LIN_1082_01     :  STRINGA {MAXLENGTH =  6, DELIMITER = Data_Sep};
+LIN_1229        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep};
+LIN_7140        :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+LIN_7143        :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+LIN_1131        :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+LIN_3055        :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+LIN_5495        :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+LIN_1082_02     :  STRINGA {MAXLENGTH =  6, DELIMITER = Comp_Sep};
+LIN_1222        : NSTRINGA {MAXLENGTH =  2, DELIMITER = Data_Sep};
+LIN_7083        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep};
+
+#---------------------------------------------------------------------------------------------------------------#
+#       LOC_01          Ortsangabe                                                                              #
+#---------------------------------------------------------------------------------------------------------------#
+#LOC_01 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#         idLOC_01       +    1
+#         LOC_01_3227    +    1
+#         LOC_01_C517    *    1
+#         LOC_01_C519    *    1
+#         LOC_01_C553    *    1
+#         LOC_01_5479    *    1;
+#
+#LOC_01_C517 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#         LOC_01_3225    *    1
+#         LOC_01_1131_01 *    1
+#         LOC_01_3055_01 *    1
+#         LOC_01_3224    *    1;
+#
+#LOC_01_C519 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#         LOC_01_3223    *    1
+#         LOC_01_1131_02 *    1
+#         LOC_01_3055_02 *    1
+#         LOC_01_3222    *    1;
+#
+#LOC_01_C553 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#         LOC_01_3233    *    1
+#         LOC_01_1131_03 *    1
+#         LOC_01_3055_03 *    1
+#         LOC_01_3232    *    1;
+#
+#idLOC_01        :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep, DEFAULT = "LOC"};
+#LOC_01_3227     :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep};
+#LOC_01_3225     :  STRINGA {MAXLENGTH =  25, DELIMITER = Comp_Sep};
+#LOC_01_1131_01  :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+#LOC_01_3055_01  :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+#LOC_01_3224     :  STRINGA {MAXLENGTH =  70, DELIMITER = Comp_Sep};
+#LOC_01_3223     :  STRINGA {MAXLENGTH =  25, DELIMITER = Comp_Sep};
+#LOC_01_1131_02  :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+#LOC_01_3055_02  :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+#LOC_01_3222     :  STRINGA {MAXLENGTH =  70, DELIMITER = Comp_Sep};
+#LOC_01_3233     :  STRINGA {MAXLENGTH =  25, DELIMITER = Comp_Sep};
+#LOC_01_1131_03  :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+#LOC_01_3055_03  :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+#LOC_01_3232     :  STRINGA {MAXLENGTH =  70, DELIMITER = Comp_Sep};
+#LOC_01_5479     :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       LOC_02          Ortsangabe                                                                              #
+#---------------------------------------------------------------------------------------------------------------#
+LOC_02 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+         idLOC_02       +    1
+         LOC_02_3227    +    1
+         LOC_02_C517    *    1
+         LOC_02_C519    *    1
+         LOC_02_C553    *    1
+         LOC_02_5479    *    1;
+
+LOC_02_C517 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+         LOC_02_3225    *    1
+         LOC_02_1131_01 *    1
+         LOC_02_3055_01 *    1
+         LOC_02_3224    *    1;
+
+LOC_02_C519 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+         LOC_02_3223    *    1
+         LOC_02_1131_02 *    1
+         LOC_02_3055_02 *    1
+         LOC_02_3222    *    1;
+
+LOC_02_C553 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+         LOC_02_3233    *    1
+         LOC_02_1131_03 *    1
+         LOC_02_3055_03 *    1
+         LOC_02_3232    *    1;
+
+idLOC_02        :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep, DEFAULT = "LOC"};
+LOC_02_3227     :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep};
+LOC_02_3225     :  STRINGA {MAXLENGTH =  25, DELIMITER = Comp_Sep};
+LOC_02_1131_01  :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+LOC_02_3055_01  :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+LOC_02_3224     :  STRINGA {MAXLENGTH =  70, DELIMITER = Comp_Sep};
+LOC_02_3223     :  STRINGA {MAXLENGTH =  25, DELIMITER = Comp_Sep};
+LOC_02_1131_02  :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+LOC_02_3055_02  :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+LOC_02_3222     :  STRINGA {MAXLENGTH =  70, DELIMITER = Comp_Sep};
+LOC_02_3233     :  STRINGA {MAXLENGTH =  25, DELIMITER = Comp_Sep};
+LOC_02_1131_03  :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+LOC_02_3055_03  :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+LOC_02_3232     :  STRINGA {MAXLENGTH =  70, DELIMITER = Comp_Sep};
+LOC_02_5479     :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep};
+
+#---------------------------------------------------------------------------------------------------------------#
+#       LOC_03          Ortsangabe                                                                              #
+#---------------------------------------------------------------------------------------------------------------#
+#LOC_03 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#         idLOC_03       +    1
+#         LOC_03_3227    +    1
+#         LOC_03_C517    *    1
+#         LOC_03_C519    *    1
+#         LOC_03_C553    *    1
+#         LOC_03_5479    *    1;
+#
+#LOC_03_C517 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#         LOC_03_3225    *    1
+#         LOC_03_1131_01 *    1
+#         LOC_03_3055_01 *    1
+#         LOC_03_3224    *    1;
+#
+#LOC_03_C519 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#         LOC_03_3223    *    1
+#         LOC_03_1131_02 *    1
+#         LOC_03_3055_02 *    1
+#         LOC_03_3222    *    1;
+#
+#LOC_03_C553 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#         LOC_03_3233    *    1
+#         LOC_03_1131_03 *    1
+#         LOC_03_3055_03 *    1
+#         LOC_03_3232    *    1;
+#
+#idLOC_03        :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep, DEFAULT = "LOC"};
+#LOC_03_3227     :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep};
+#LOC_03_3225     :  STRINGA {MAXLENGTH =  25, DELIMITER = Comp_Sep};
+#LOC_03_1131_01  :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+#LOC_03_3055_01  :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+#LOC_03_3224     :  STRINGA {MAXLENGTH =  70, DELIMITER = Comp_Sep};
+#LOC_03_3223     :  STRINGA {MAXLENGTH =  25, DELIMITER = Comp_Sep};
+#LOC_03_1131_02  :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+#LOC_03_3055_02  :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+#LOC_03_3222     :  STRINGA {MAXLENGTH =  70, DELIMITER = Comp_Sep};
+#LOC_03_3233     :  STRINGA {MAXLENGTH =  25, DELIMITER = Comp_Sep};
+#LOC_03_1131_03  :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+#LOC_03_3055_03  :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+#LOC_03_3232     :  STRINGA {MAXLENGTH =  70, DELIMITER = Comp_Sep};
+#LOC_03_5479     :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       MEA_01          Maße und Gewichte                                                                       #
+#---------------------------------------------------------------------------------------------------------------#
+#MEA_01 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idMEA_01
+#        MEA_01_6311     =    1
+#        MEA_01_C502     *    1
+#        MEA_01_C174     *    1
+#        MEA_01_7383     *    1;
+#
+#MEA_01_C502 {DELIMITER = Data_Sep,SHORTEN = Comp_Sep}:
+#        MEA_01_6313     *    1
+#        MEA_01_6321     *    1
+#        MEA_01_6155     *    1
+#        MEA_01_6154     *    1;
+#
+#MEA_01_C174 {DELIMITER = Data_Sep,SHORTEN = Comp_Sep}:
+#        MEA_01_6411     =    1
+#        MEA_01_6314     *    1
+#        MEA_01_6162     *    1
+#        MEA_01_6152     *    1
+#        MEA_01_6432     *    1;
+#
+#idMEA_01        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "MEA"};
+#MEA_01_6311     :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep};
+#MEA_01_6313     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#MEA_01_6321     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#MEA_01_6155     :  STRINGA {MAXLENGTH = 17, DELIMITER = Comp_Sep};
+#MEA_01_6154     :  STRINGA {MAXLENGTH = 70, DELIMITER = Comp_Sep};
+#MEA_01_6411     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#MEA_01_6314     : NSTRINGA {MAXLENGTH = 18, DELIMITER = Comp_Sep};
+#MEA_01_6162     : NSTRINGA {MAXLENGTH = 18, DELIMITER = Comp_Sep};
+#MEA_01_6152     : NSTRINGA {MAXLENGTH = 18, DELIMITER = Comp_Sep};
+#MEA_01_6432     : NSTRINGA {MAXLENGTH =  2, DELIMITER = Comp_Sep};
+#MEA_01_7383     :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       MEA_02          Maße und Gewichte                                                                       #
+#---------------------------------------------------------------------------------------------------------------#
+#MEA_02 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idMEA_02
+#        MEA_02_6311     =    1
+#        MEA_02_C502     *    1
+#        MEA_02_C174     *    1
+#        MEA_02_7383     *    1;
+#
+#MEA_02_C502 {DELIMITER = Data_Sep,SHORTEN = Comp_Sep}:
+#        MEA_02_6313     *    1
+#        MEA_02_6321     *    1
+#        MEA_02_6155     *    1
+#        MEA_02_6154     *    1;
+#
+#MEA_02_C174 {DELIMITER = Data_Sep,SHORTEN = Comp_Sep}:
+#        MEA_02_6411     =    1
+#        MEA_02_6314     *    1
+#        MEA_02_6162     *    1
+#        MEA_02_6152     *    1
+#        MEA_02_6432     *    1;
+#
+#idMEA_02        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "MEA"};
+#MEA_02_6311     :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep};
+#MEA_02_6313     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#MEA_02_6321     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#MEA_02_6155     :  STRINGA {MAXLENGTH = 17, DELIMITER = Comp_Sep};
+#MEA_02_6154     :  STRINGA {MAXLENGTH = 70, DELIMITER = Comp_Sep};
+#MEA_02_6411     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#MEA_02_6314     : NSTRINGA {MAXLENGTH = 18, DELIMITER = Comp_Sep};
+#MEA_02_6162     : NSTRINGA {MAXLENGTH = 18, DELIMITER = Comp_Sep};
+#MEA_02_6152     : NSTRINGA {MAXLENGTH = 18, DELIMITER = Comp_Sep};
+#MEA_02_6432     : NSTRINGA {MAXLENGTH =  2, DELIMITER = Comp_Sep};
+#MEA_02_7383     :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       NAD_01          Name und Adresse                                                                        #
+#---------------------------------------------------------------------------------------------------------------#
+NAD_01 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+        idNAD_01
+        NAD_01_3035     =    1
+        NAD_01_C082     *    1
+        NAD_01_C058     *    1
+        NAD_01_C080     *    1
+        NAD_01_C059     *    1
+        NAD_01_3164     *    1
+        NAD_01_3229     *    1
+        NAD_01_3251     *    1
+        NAD_01_3207     *    1;
+
+NAD_01_C082 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        NAD_01_3039     =    1
+        NAD_01_1131     *    1
+        NAD_01_3055     *    1;
+
+NAD_01_C058 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        NAD_01_3124_01  =    1
+        NAD_01_3124_02  *    1
+        NAD_01_3124_03  *    1
+        NAD_01_3124_04  *    1
+        NAD_01_3124_05  *    1;
+
+NAD_01_C080 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        NAD_01_3036_01  =    1
+        NAD_01_3036_02  *    1
+        NAD_01_3036_03  *    1
+        NAD_01_3036_04  *    1
+        NAD_01_3036_05  *    1
+        NAD_01_3045     *    1;
+
+NAD_01_C059 {DELIMITER = Data_Sep,SHORTEN = Comp_Sep}:
+        NAD_01_3042_01  =    1
+        NAD_01_3042_02  *    1
+        NAD_01_3042_03  *    1
+        NAD_01_3042_04  *    1;
+
+idNAD_01        :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep,DEFAULT = "NAD"};
+NAD_01_3035     :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep};
+NAD_01_3039     :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+NAD_01_1131     :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+NAD_01_3055     :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+NAD_01_3124_01  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+NAD_01_3124_02  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+NAD_01_3124_03  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+NAD_01_3124_04  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+NAD_01_3124_05  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+NAD_01_3036_01  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+NAD_01_3036_02  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+NAD_01_3036_03  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+NAD_01_3036_04  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+NAD_01_3036_05  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+NAD_01_3045     :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+NAD_01_3042_01  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+NAD_01_3042_02  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+NAD_01_3042_03  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+NAD_01_3042_04  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+NAD_01_3164     :  STRINGA {MAXLENGTH = 35,DELIMITER = Data_Sep};
+NAD_01_3229     :  STRINGA {MAXLENGTH =  9,DELIMITER = Data_Sep};
+NAD_01_3251     :  STRINGA {MAXLENGTH =  9,DELIMITER = Data_Sep};
+NAD_01_3207     :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep};
+
+#---------------------------------------------------------------------------------------------------------------#
+#       NAD_02          Name und Adresse                                                                        #
+#---------------------------------------------------------------------------------------------------------------#
+NAD_02 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+        idNAD_02
+        NAD_02_3035     =    1
+        NAD_02_C082     *    1
+        NAD_02_C058     *    1
+        NAD_02_C080     *    1
+        NAD_02_C059     *    1
+        NAD_02_3164     *    1
+        NAD_02_3229     *    1
+        NAD_02_3251     *    1
+        NAD_02_3207     *    1;
+
+NAD_02_C082 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        NAD_02_3039     =    1
+        NAD_02_1131     *    1
+        NAD_02_3055     *    1;
+
+NAD_02_C058 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        NAD_02_3124_01  =    1
+        NAD_02_3124_02  *    1
+        NAD_02_3124_03  *    1
+        NAD_02_3124_04  *    1
+        NAD_02_3124_05  *    1;
+
+NAD_02_C080 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        NAD_02_3036_01  =    1
+        NAD_02_3036_02  *    1
+        NAD_02_3036_03  *    1
+        NAD_02_3036_04  *    1
+        NAD_02_3036_05  *    1
+        NAD_02_3045     *    1;
+
+NAD_02_C059 {DELIMITER = Data_Sep,SHORTEN = Comp_Sep}:
+        NAD_02_3042_01  =    1
+        NAD_02_3042_02  *    1
+        NAD_02_3042_03  *    1
+        NAD_02_3042_04  *    1;
+
+idNAD_02        :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep,DEFAULT = "NAD"};
+NAD_02_3035     :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep};
+NAD_02_3039     :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+NAD_02_1131     :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+NAD_02_3055     :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+NAD_02_3124_01  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+NAD_02_3124_02  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+NAD_02_3124_03  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+NAD_02_3124_04  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+NAD_02_3124_05  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+NAD_02_3036_01  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+NAD_02_3036_02  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+NAD_02_3036_03  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+NAD_02_3036_04  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+NAD_02_3036_05  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+NAD_02_3045     :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+NAD_02_3042_01  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+NAD_02_3042_02  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+NAD_02_3042_03  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+NAD_02_3042_04  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+NAD_02_3164     :  STRINGA {MAXLENGTH = 35,DELIMITER = Data_Sep};
+NAD_02_3229     :  STRINGA {MAXLENGTH =  9,DELIMITER = Data_Sep};
+NAD_02_3251     :  STRINGA {MAXLENGTH =  9,DELIMITER = Data_Sep};
+NAD_02_3207     :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep};
+
+#---------------------------------------------------------------------------------------------------------------#
+#       NAD_03          Name und Adresse                                                                        #
+#---------------------------------------------------------------------------------------------------------------#
+#NAD_03 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idNAD_03
+#        NAD_03_3035     =    1
+#        NAD_03_C082     *    1
+#        NAD_03_C058     *    1
+#        NAD_03_C080     *    1
+#        NAD_03_C059     *    1
+#        NAD_03_3164     *    1
+#        NAD_03_3229     *    1
+#        NAD_03_3251     *    1
+#        NAD_03_3207     *    1;
+#
+#NAD_03_C082 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        NAD_03_3039     =    1
+#        NAD_03_1131     *    1
+#        NAD_03_3055     *    1;
+#
+#NAD_03_C058 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        NAD_03_3124_01  =    1
+#        NAD_03_3124_02  *    1
+#        NAD_03_3124_03  *    1
+#        NAD_03_3124_04  *    1
+#        NAD_03_3124_05  *    1;
+#
+#NAD_03_C080 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        NAD_03_3036_01  =    1
+#        NAD_03_3036_02  *    1
+#        NAD_03_3036_03  *    1
+#        NAD_03_3036_04  *    1
+#        NAD_03_3036_05  *    1
+#        NAD_03_3045     *    1;
+#
+#NAD_03_C059 {DELIMITER = Data_Sep,SHORTEN = Comp_Sep}:
+#        NAD_03_3042_01  =    1
+#        NAD_03_3042_02  *    1
+#        NAD_03_3042_03  *    1
+#        NAD_03_3042_04  *    1;
+#
+#idNAD_03        :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep,DEFAULT = "NAD"};
+#NAD_03_3035     :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep};
+#NAD_03_3039     :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+#NAD_03_1131     :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+#NAD_03_3055     :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+#NAD_03_3124_01  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+#NAD_03_3124_02  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+#NAD_03_3124_03  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+#NAD_03_3124_04  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+#NAD_03_3124_05  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+#NAD_03_3036_01  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+#NAD_03_3036_02  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+#NAD_03_3036_03  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+#NAD_03_3036_04  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+#NAD_03_3036_05  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+#NAD_03_3045     :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+#NAD_03_3042_01  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+#NAD_03_3042_02  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+#NAD_03_3042_03  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+#NAD_03_3042_04  :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+#NAD_03_3164     :  STRINGA {MAXLENGTH = 35,DELIMITER = Data_Sep};
+#NAD_03_3229     :  STRINGA {MAXLENGTH =  9,DELIMITER = Data_Sep};
+#NAD_03_3251     :  STRINGA {MAXLENGTH =  9,DELIMITER = Data_Sep};
+#NAD_03_3207     :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       PAC             Packstück / Verpackung                                                                  #
+#---------------------------------------------------------------------------------------------------------------#
+PAC {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+        idPAC           +    1
+        PAC_7224        *    1
+        PAC_C531        *    1
+        PAC_C202        *    1
+        PAC_C402        *    1
+        PAC_C532        *    1;
+
+
+PAC_C531 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        PAC_7075        *    1
+        PAC_7233        *    1
+        PAC_7073        *    1;
+
+PAC_C202 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        PAC_7065        *    1
+        PAC_1131        *    1
+        PAC_3055        *    1
+        PAC_7064_01     *    1;
+
+PAC_C402 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        PAC_7077        =    1
+        PAC_7064_02     =    1
+        PAC_7143_01     *    1
+        PAC_7064_03     *    1
+        PAC_7143_02     *    1;
+
+PAC_C532 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        PAC_8395        *    1
+        PAC_8393        *    1;
+
+idPAC           :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "PAC"};
+PAC_7224        : NSTRINGA {MAXLENGTH =  8, DELIMITER = Data_Sep};
+PAC_7075        :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+PAC_7233        :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+PAC_7073        :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+PAC_7065        :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+PAC_1131        :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+PAC_3055        :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+PAC_7064_01     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+PAC_7077        :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+PAC_7064_02     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+PAC_7143_01     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+PAC_7064_03     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+PAC_7143_02     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+PAC_8395        :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+PAC_8393        :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+
+#---------------------------------------------------------------------------------------------------------------#
+#       PCI             Packstückkennzeichnung                                                                  #
+#---------------------------------------------------------------------------------------------------------------#
+#PCI {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idPCI           +    1
+#        PCI_4233        *    1
+#        PCI_C210        *    1
+#        PCI_8275        *    1
+#        PCI_C827        *    1;
+#
+#PCI_C210 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        PCI_7102_01     =    1
+#        PCI_7102_02     *    1
+#        PCI_7102_03     *    1
+#        PCI_7102_04     *    1
+#        PCI_7102_05     *    1
+#        PCI_7102_06     *    1
+#        PCI_7102_07     *    1
+#        PCI_7102_08     *    1
+#        PCI_7102_09     *    1
+#        PCI_7102_10     *    1;
+#
+#PCI_C827 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        PCI_7511        =    1
+#        PCI_1131        *    1
+#        PCI_3055        *    1;
+#
+#idPCI           :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep,DEFAULT = "PCI"};
+#PCI_4233        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep};
+#PCI_7102_01     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#PCI_7102_02     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#PCI_7102_03     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#PCI_7102_04     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#PCI_7102_05     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#PCI_7102_06     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#PCI_7102_07     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#PCI_7102_08     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#PCI_7102_09     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#PCI_7102_10     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#PCI_8275        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep};
+#PCI_7511        :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#PCI_1131        :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#PCI_3055        :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       PIA             Zusätzliche Produktidentifikation                                                       #
+#---------------------------------------------------------------------------------------------------------------#
+PIA {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+        idPIA           +    1
+        PIA_4347        +    1
+        PIA_C212        +    5;
+
+PIA_C212 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        PIA_7140        *    1
+        PIA_7143        *    1
+        PIA_1131        *    1
+        PIA_3055        *    1;
+
+
+idPIA           :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep, DEFAULT = "PIA"};
+PIA_4347        :  STRINGA {MAXLENGTH =   3, DELIMITER = Data_Sep};
+PIA_7140        :  STRINGA {MAXLENGTH =  35, DELIMITER = Comp_Sep};
+PIA_7143        :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+PIA_1131        :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+PIA_3055        :  STRINGA {MAXLENGTH =   3, DELIMITER = Comp_Sep};
+
+#---------------------------------------------------------------------------------------------------------------#
+#       QTY_01          Mengenangaben                                                                           #
+#---------------------------------------------------------------------------------------------------------------#
+QTY_01 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+        idQTY_01
+        QTY_01_C186     =    1;
+
+QTY_01_C186 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        QTY_01_6063     =    1
+        QTY_01_6060     =    1
+        QTY_01_6411     *    1;
+
+idQTY_01        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "QTY"};
+QTY_01_6063     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+QTY_01_6060     : NSTRINGA {MAXLENGTH = 15, DELIMITER = Comp_Sep};
+QTY_01_6411     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+
+#---------------------------------------------------------------------------------------------------------------#
+#       QTY_02          Mengenangaben                                                                           #
+#---------------------------------------------------------------------------------------------------------------#
+QTY_02 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+        idQTY_02
+        QTY_02_C186     =    1;
+
+QTY_02_C186 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        QTY_02_6063     =    1
+        QTY_02_6060     =    1
+        QTY_02_6411     *    1;
+
+idQTY_02        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "QTY"};
+QTY_02_6063     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+QTY_02_6060     : NSTRINGA {MAXLENGTH = 15, DELIMITER = Comp_Sep};
+QTY_02_6411     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+
+#---------------------------------------------------------------------------------------------------------------#
+#       QTY_02b         Mengenangaben                                                                           #
+#---------------------------------------------------------------------------------------------------------------#
+QTY_02b {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+        idQTY_02b
+        QTY_02b_C186    =    1;
+
+QTY_02b_C186 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        QTY_02b_6063    =    1
+        QTY_02b_6060    =    1
+        QTY_02b_6411    *    1;
+
+idQTY_02b       :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "QTY"};
+QTY_02b_6063    :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+QTY_02b_6060    : NSTRINGA {MAXLENGTH = 15, DELIMITER = Comp_Sep};
+QTY_02b_6411    :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+
+#---------------------------------------------------------------------------------------------------------------#
+#       QTY_02c         Mengenangaben                                                                           #
+#---------------------------------------------------------------------------------------------------------------#
+QTY_02c {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+        idQTY_02c
+        QTY_02c_C186    =    1;
+
+QTY_02c_C186 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        QTY_02c_6063    =    1
+        QTY_02c_6060    =    1
+        QTY_02c_6411    *    1;
+
+idQTY_02c       :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "QTY"};
+QTY_02c_6063    :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+QTY_02c_6060    : NSTRINGA {MAXLENGTH = 15, DELIMITER = Comp_Sep};
+QTY_02c_6411    :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+
+#---------------------------------------------------------------------------------------------------------------#
+#       QTY_03          Mengenangaben                                                                           #
+#---------------------------------------------------------------------------------------------------------------#
+QTY_03 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+        idQTY_03
+        QTY_03_C186     =    1;
+
+QTY_03_C186 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        QTY_03_6063     =    1
+        QTY_03_6060     =    1
+        QTY_03_6411     *    1;
+
+idQTY_03        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "QTY"};
+QTY_03_6063     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+QTY_03_6060     : NSTRINGA {MAXLENGTH = 15, DELIMITER = Comp_Sep};
+QTY_03_6411     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+
+#---------------------------------------------------------------------------------------------------------------#
+#       QTY_04          Mengenangaben                                                                           #
+#---------------------------------------------------------------------------------------------------------------#
+#QTY_04 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idQTY_04
+#        QTY_04_C186     =    1;
+#
+#QTY_04_C186 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        QTY_04_6063     =    1
+#        QTY_04_6060     =    1
+#        QTY_04_6411     *    1;
+#
+#idQTY_04        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "QTY"};
+#QTY_04_6063     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#QTY_04_6060     : NSTRINGA {MAXLENGTH = 15, DELIMITER = Comp_Sep};
+#QTY_04_6411     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       QTY_05          Mengenangaben                                                                           #
+#---------------------------------------------------------------------------------------------------------------#
+#QTY_05 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idQTY_05
+#        QTY_05_C186     =    1;
+#
+#QTY_05_C186 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        QTY_05_6063     =    1
+#        QTY_05_6060     =    1
+#        QTY_05_6411     *    1;
+#
+#idQTY_05        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "QTY"};
+#QTY_05_6063     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#QTY_05_6060     : NSTRINGA {MAXLENGTH = 15, DELIMITER = Comp_Sep};
+#QTY_05_6411     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       RFF_01          Referenzangaben                                                                         #
+#---------------------------------------------------------------------------------------------------------------#
+#RFF_01 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idRFF_01
+#        RFF_01_C506     =    1;
+#
+#RFF_01_C506 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        RFF_01_1153     =    1
+#        RFF_01_1154     *    1
+#        RFF_01_1156     *    1
+#        RFF_01_4000     *    1;
+#
+#idRFF_01        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "RFF"};
+#RFF_01_1153     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#RFF_01_1154     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#RFF_01_1156     :  STRINGA {MAXLENGTH =  6, DELIMITER = Comp_Sep};
+#RFF_01_4000     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       RFF_02          Referenzangaben                                                                         #
+#---------------------------------------------------------------------------------------------------------------#
+#RFF_02 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idRFF_02
+#        RFF_02_C506     =    1;
+#
+#RFF_02_C506 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        RFF_02_1153     =    1
+#        RFF_02_1154     *    1
+#        RFF_02_1156     *    1
+#        RFF_02_4000     *    1;
+#
+#idRFF_02        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "RFF"};
+#RFF_02_1153     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#RFF_02_1154     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#RFF_02_1156     :  STRINGA {MAXLENGTH =  6, DELIMITER = Comp_Sep};
+#RFF_02_4000     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       RFF_03          Referenzangaben                                                                         #
+#---------------------------------------------------------------------------------------------------------------#
+#RFF_03 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idRFF_03
+#        RFF_03_C506     =    1;
+#
+#RFF_03_C506 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        RFF_03_1153     =    1
+#        RFF_03_1154     *    1
+#        RFF_03_1156     *    1
+#        RFF_03_4000     *    1;
+#
+#idRFF_03        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "RFF"};
+#RFF_03_1153     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#RFF_03_1154     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#RFF_03_1156     :  STRINGA {MAXLENGTH =  6, DELIMITER = Comp_Sep};
+#RFF_03_4000     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       RFF_04          Referenzangaben                                                                         #
+#---------------------------------------------------------------------------------------------------------------#
+RFF_04 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+        idRFF_04
+        RFF_04_C506     =    1;
+
+RFF_04_C506 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        RFF_04_1153     =    1
+        RFF_04_1154     *    1
+        RFF_04_1156     *    1
+        RFF_04_4000     *    1;
+
+idRFF_04        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "RFF"};
+RFF_04_1153     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+RFF_04_1154     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+RFF_04_1156     :  STRINGA {MAXLENGTH =  6, DELIMITER = Comp_Sep};
+RFF_04_4000     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+
+#---------------------------------------------------------------------------------------------------------------#
+#       RFF_05          Referenzangaben                                                                         #
+#---------------------------------------------------------------------------------------------------------------#
+RFF_05 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+        idRFF_05
+        RFF_05_C506     =    1;
+
+RFF_05_C506 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        RFF_05_1153     =    1
+        RFF_05_1154     *    1
+        RFF_05_1156     *    1
+        RFF_05_4000     *    1;
+
+idRFF_05        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "RFF"};
+RFF_05_1153     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+RFF_05_1154     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+RFF_05_1156     :  STRINGA {MAXLENGTH =  6, DELIMITER = Comp_Sep};
+RFF_05_4000     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+
+#---------------------------------------------------------------------------------------------------------------#
+#       RFF_06          Referenzangaben                                                                         #
+#---------------------------------------------------------------------------------------------------------------#
+#RFF_06 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idRFF_06
+#        RFF_06_C506     =    1;
+#
+#RFF_06_C506 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        RFF_06_1153     =    1
+#        RFF_06_1154     *    1
+#        RFF_06_1156     *    1
+#        RFF_06_4000     *    1;
+#
+#idRFF_06        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "RFF"};
+#RFF_06_1153     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#RFF_06_1154     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#RFF_06_1156     :  STRINGA {MAXLENGTH =  6, DELIMITER = Comp_Sep};
+#RFF_06_4000     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       RFF_07          Referenzangaben                                                                         #
+#---------------------------------------------------------------------------------------------------------------#
+#RFF_07 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idRFF_07
+#        RFF_07_C506     =    1;
+#
+#RFF_07_C506 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        RFF_07_1153     =    1
+#        RFF_07_1154     *    1
+#        RFF_07_1156     *    1
+#        RFF_07_4000     *    1;
+#
+#idRFF_07        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "RFF"};
+#RFF_07_1153     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#RFF_07_1154     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#RFF_07_1156     :  STRINGA {MAXLENGTH =  6, DELIMITER = Comp_Sep};
+#RFF_07_4000     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       RFF_08          Referenzangaben                                                                         #
+#---------------------------------------------------------------------------------------------------------------#
+#RFF_08 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idRFF_08        +    1
+#        RFF_08_C506     =    1;
+#
+#RFF_08_C506 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        RFF_08_1153     =    1
+#        RFF_08_1154     *    1
+#        RFF_08_1156     *    1
+#        RFF_08_4000     *    1;
+#
+#idRFF_08        :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "RFF"};
+#RFF_08_1153     :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+#RFF_08_1154     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#RFF_08_1156     :  STRINGA {MAXLENGTH =  6, DELIMITER = Comp_Sep};
+#RFF_08_4000     :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+#
+#-------------------------------------------------------------------------------------------------------#
+#       SCC_01          Zeitplanbedingungen                                                             #
+#-------------------------------------------------------------------------------------------------------#
+
+SCC_01 {DELIMITER = Seg_Terminator,ESCAPE = Release_Ind,SHORTEN = Data_Sep}:
+        idSCC_01
+        SCC_01_4017     +    1
+        SCC_01_4493     *    1
+        SCC_01_C329     *    1;
+
+SCC_01_C329 {DELIMITER = Data_Sep,SHORTEN = Comp_Sep}: 
+        SCC_01_2013     *    1
+        SCC_01_2015     *    1
+        SCC_01_2017     *    1;
+
+idSCC_01        :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep,DEFAULT = "SCC"};
+SCC_01_4017     :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep};
+SCC_01_4493     :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep};
+SCC_01_2013     :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+SCC_01_2015     :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+SCC_01_2017     :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+
+#-------------------------------------------------------------------------------------------------------#
+#       SCC_01b         Zeitplanbedingungen                                                             #
+#-------------------------------------------------------------------------------------------------------#
+
+SCC_01b {DELIMITER = Seg_Terminator,ESCAPE = Release_Ind,SHORTEN = Data_Sep}:
+        idSCC_01b       +    1
+        SCC_01b_4017    +    1
+        SCC_01b_4493    *    1
+        SCC_01b_C329    *    1;
+
+SCC_01b_C329 {DELIMITER = Data_Sep,SHORTEN = Comp_Sep}: 
+        SCC_01b_2013    *    1
+        SCC_01b_2015    *    1
+        SCC_01b_2017    *    1;
+
+idSCC_01b       :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep,DEFAULT = "SCC"};
+SCC_01b_4017    :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep};
+SCC_01b_4493    :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep};
+SCC_01b_2013    :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+SCC_01b_2015    :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+SCC_01b_2017    :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+
+#-------------------------------------------------------------------------------------------------------#
+#       SCC_01c         Zeitplanbedingungen                                                             #
+#-------------------------------------------------------------------------------------------------------#
+
+SCC_01c {DELIMITER = Seg_Terminator,ESCAPE = Release_Ind,SHORTEN = Data_Sep}:
+        idSCC_01c       +    1
+        SCC_01c_4017    +    1
+        SCC_01c_4493    *    1
+        SCC_01c_C329    *    1;
+
+SCC_01c_C329 {DELIMITER = Data_Sep,SHORTEN = Comp_Sep}: 
+        SCC_01c_2013    *    1
+        SCC_01c_2015    *    1
+        SCC_01c_2017    *    1;
+
+idSCC_01c       :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep,DEFAULT = "SCC"};
+SCC_01c_4017    :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep};
+SCC_01c_4493    :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep};
+SCC_01c_2013    :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+SCC_01c_2015    :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+SCC_01c_2017    :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+
+#-------------------------------------------------------------------------------------------------------#
+#       SCC_02          Zeitplanbedingungen                                                             #
+#-------------------------------------------------------------------------------------------------------#
+#
+#SCC_02 {DELIMITER = Seg_Terminator,ESCAPE = Release_Ind,SHORTEN = Data_Sep}:
+#        idSCC_02
+#        SCC_02_4017     +    1
+#        SCC_02_4493     *    1
+#        SCC_02_C329     *    1;
+#
+#SCC_02_C329 {DELIMITER = Data_Sep,SHORTEN = Comp_Sep}: 
+#        SCC_02_2013     *    1
+#        SCC_02_2015     *    1
+#        SCC_02_2017     *    1;
+#
+#idSCC_02        :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep,DEFAULT = "SCC"};
+#SCC_02_4017     :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep};
+#SCC_02_4493     :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep};
+#SCC_02_2013     :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+#SCC_02_2015     :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+#SCC_02_2017     :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       TDT_01          Transporteinzelheiten                                                                   #
+#---------------------------------------------------------------------------------------------------------------#
+#TDT_01 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idTDT_01        +    1
+#        TDT_01_8051     =    1
+#        TDT_01_8028     *    1
+#        TDT_01_C220     *    1
+#        TDT_01_C228     *    1
+#        TDT_01_C040     *    1
+#        TDT_01_8101     *    1
+#        TDT_01_C401     *    1
+#        TDT_01_C222     *    1
+#        TDT_01_8281     *    1;
+#
+#TDT_01_C220 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        TDT_01_8067     *    1
+#        TDT_01_8066     *    1;
+#
+#TDT_01_C228 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        TDT_01_8179     *    1
+#        TDT_01_8178     *    1;
+#
+#TDT_01_C040 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        TDT_01_3127     *    1
+#        TDT_01_1131_01  *    1
+#        TDT_01_3055_01  *    1
+#        TDT_01_3128     *    1;
+#
+#TDT_01_C401 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        TDT_01_8457     =    1
+#        TDT_01_8459     =    1
+#        TDT_01_7130     *    1;
+#
+#TDT_01_C222 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        TDT_01_8213     *    1
+#        TDT_01_1131_02  *    1
+#        TDT_01_3055_02  *    1
+#        TDT_01_8212     *    1
+#        TDT_01_8453     *    1;
+#
+#idTDT_01        :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep,DEFAULT = "TDT"};
+#TDT_01_8051     :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep};
+#TDT_01_8028     :  STRINGA {MAXLENGTH = 17,DELIMITER = Data_Sep};
+#TDT_01_8067     :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+#TDT_01_8066     :  STRINGA {MAXLENGTH = 17,DELIMITER = Comp_Sep};
+#TDT_01_8179     :  STRINGA {MAXLENGTH =  8,DELIMITER = Comp_Sep};
+#TDT_01_8178     :  STRINGA {MAXLENGTH = 17,DELIMITER = Comp_Sep};
+#TDT_01_3127     :  STRINGA {MAXLENGTH = 17,DELIMITER = Comp_Sep};
+#TDT_01_1131_01  :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+#TDT_01_3055_01  :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+#TDT_01_3128     :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+#TDT_01_8101     :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep};
+#TDT_01_8457     :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+#TDT_01_8459     :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+#TDT_01_7130     :  STRINGA {MAXLENGTH = 17,DELIMITER = Comp_Sep};
+#TDT_01_8213     :  STRINGA {MAXLENGTH =  9,DELIMITER = Comp_Sep};
+#TDT_01_1131_02  :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+#TDT_01_3055_02  :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+#TDT_01_8212     :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+#TDT_01_8453     :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+#TDT_01_8281     :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       TDT_02          Transporteinzelheiten                                                                   #
+#---------------------------------------------------------------------------------------------------------------#
+#TDT_02 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idTDT_02        +    1
+#        TDT_02_8051     =    1
+#        TDT_02_8028     *    1
+#        TDT_02_C220     *    1
+#        TDT_02_C228     *    1
+#        TDT_02_C040     *    1
+#        TDT_02_8101     *    1
+#        TDT_02_C401     *    1
+#        TDT_02_C222     *    1
+#        TDT_02_8281     *    1;
+#
+#TDT_02_C220 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        TDT_02_8067     *    1
+#        TDT_02_8066     *    1;
+#
+#TDT_02_C228 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        TDT_02_8179     *    1
+#        TDT_02_8178     *    1;
+#
+#TDT_02_C040 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        TDT_02_3127     *    1
+#        TDT_02_1131_01  *    1
+#        TDT_02_3055_01  *    1
+#        TDT_02_3128     *    1;
+#
+#TDT_02_C401 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        TDT_02_8457     =    1
+#        TDT_02_8459     =    1
+#        TDT_02_7130     *    1;
+#
+#TDT_02_C222 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        TDT_02_8213     *    1
+#        TDT_02_1131_02  *    1
+#        TDT_02_3055_02  *    1
+#        TDT_02_8212     *    1
+#        TDT_02_8453     *    1;
+#
+#idTDT_02        :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep,DEFAULT = "TDT"};
+#TDT_02_8051     :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep};
+#TDT_02_8028     :  STRINGA {MAXLENGTH = 17,DELIMITER = Data_Sep};
+#TDT_02_8067     :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+#TDT_02_8066     :  STRINGA {MAXLENGTH = 17,DELIMITER = Comp_Sep};
+#TDT_02_8179     :  STRINGA {MAXLENGTH =  8,DELIMITER = Comp_Sep};
+#TDT_02_8178     :  STRINGA {MAXLENGTH = 17,DELIMITER = Comp_Sep};
+#TDT_02_3127     :  STRINGA {MAXLENGTH = 17,DELIMITER = Comp_Sep};
+#TDT_02_1131_01  :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+#TDT_02_3055_01  :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+#TDT_02_3128     :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+#TDT_02_8101     :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep};
+#TDT_02_8457     :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+#TDT_02_8459     :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+#TDT_02_7130     :  STRINGA {MAXLENGTH = 17,DELIMITER = Comp_Sep};
+#TDT_02_8213     :  STRINGA {MAXLENGTH =  9,DELIMITER = Comp_Sep};
+#TDT_02_1131_02  :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+#TDT_02_3055_02  :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+#TDT_02_8212     :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+#TDT_02_8453     :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+#TDT_02_8281     :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       TDT_03          Transporteinzelheiten                                                                   #
+#---------------------------------------------------------------------------------------------------------------#
+#TDT_03 {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+#        idTDT_03        +    1
+#        TDT_03_8051     =    1
+#        TDT_03_8028     *    1
+#        TDT_03_C220     *    1
+#        TDT_03_C228     *    1
+#        TDT_03_C040     *    1
+#        TDT_03_8101     *    1
+#        TDT_03_C401     *    1
+#        TDT_03_C222     *    1
+#        TDT_03_8281     *    1;
+#
+#TDT_03_C220 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        TDT_03_8067     *    1
+#        TDT_03_8066     *    1;
+#
+#TDT_03_C228 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        TDT_03_8179     *    1
+#        TDT_03_8178     *    1;
+#
+#TDT_03_C040 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        TDT_03_3127     *    1
+#        TDT_03_1131_01  *    1
+#        TDT_03_3055_01  *    1
+#        TDT_03_3128     *    1;
+#
+#TDT_03_C401 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        TDT_03_8457     =    1
+#        TDT_03_8459     =    1
+#        TDT_03_7130     *    1;
+#
+#TDT_03_C222 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+#        TDT_03_8213     *    1
+#        TDT_03_1131_02  *    1
+#        TDT_03_3055_02  *    1
+#        TDT_03_8212     *    1
+#        TDT_03_8453     *    1;
+#
+#idTDT_03        :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep,DEFAULT = "TDT"};
+#TDT_03_8051     :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep};
+#TDT_03_8028     :  STRINGA {MAXLENGTH = 17,DELIMITER = Data_Sep};
+#TDT_03_8067     :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+#TDT_03_8066     :  STRINGA {MAXLENGTH = 17,DELIMITER = Comp_Sep};
+#TDT_03_8179     :  STRINGA {MAXLENGTH =  8,DELIMITER = Comp_Sep};
+#TDT_03_8178     :  STRINGA {MAXLENGTH = 17,DELIMITER = Comp_Sep};
+#TDT_03_3127     :  STRINGA {MAXLENGTH = 17,DELIMITER = Comp_Sep};
+#TDT_03_1131_01  :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+#TDT_03_3055_01  :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+#TDT_03_3128     :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+#TDT_03_8101     :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep};
+#TDT_03_8457     :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+#TDT_03_8459     :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+#TDT_03_7130     :  STRINGA {MAXLENGTH = 17,DELIMITER = Comp_Sep};
+#TDT_03_8213     :  STRINGA {MAXLENGTH =  9,DELIMITER = Comp_Sep};
+#TDT_03_1131_02  :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+#TDT_03_3055_02  :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+#TDT_03_8212     :  STRINGA {MAXLENGTH = 35,DELIMITER = Comp_Sep};
+#TDT_03_8453     :  STRINGA {MAXLENGTH =  3,DELIMITER = Comp_Sep};
+#TDT_03_8281     :  STRINGA {MAXLENGTH =  3,DELIMITER = Data_Sep};
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       UNA                                                                                                     #
+#---------------------------------------------------------------------------------------------------------------#
+UNA :
+        idUNA
+        Comp_Sep
+        Data_Sep
+        Decimal_Notation
+        Release_Ind
+        Filler
+        Seg_Terminator;
+
+idUNA           :  STRING {MAXLENGTH =  3, DEFAULT = "UNA"};
+Comp_Sep        :  STRING {MAXLENGTH =  1, DEFAULT = ":"};
+Data_Sep        :  STRING {MAXLENGTH =  1, DEFAULT = "+"};
+Decimal_Notation:  STRING {MAXLENGTH =  1, DEFAULT = "."};
+Release_Ind     :  STRING {MAXLENGTH =  1, DEFAULT = "?"};
+Filler          :  STRING {MAXLENGTH =  1, DEFAULT = " "};
+Seg_Terminator  :  STRING {MAXLENGTH =  1, DEFAULT = "'"};
+
+#---------------------------------------------------------------------------------------------------------------#
+#       UNB                                                                                                     #
+#---------------------------------------------------------------------------------------------------------------#
+UNB {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+        idUNB
+        UNB_S001        =    1
+        UNB_S002        =    1
+        UNB_S003        =    1
+        UNB_S004        =    1
+        UNB_0020        =    1
+        UNB_S005        *    1
+        UNB_0026        *    1
+        UNB_0029        *    1
+        UNB_0031        *    1
+        UNB_0032        *    1
+        UNB_0035        *    1;
+
+UNB_S001 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        UNB_0001        =    1
+        UNB_0002        =    1;
+
+UNB_S002 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        UNB_0004        =    1
+        UNB_0007_01     *    1
+        UNB_0008        *    1;
+
+UNB_S003 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        UNB_0010        =    1
+        UNB_0007_02     *    1
+        UNB_0014        *    1;
+
+UNB_S004 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        UNB_0017        =    1
+        UNB_0019        =    1;
+
+UNB_S005 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        UNB_0022        =    1
+        UNB_0025        *    1;
+
+idUNB           :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep,DEFAULT = "UNB"};
+UNB_0001        :  STRINGA {MAXLENGTH =  4, DELIMITER = Comp_Sep};
+UNB_0002        : NSTRINGA {MAXLENGTH =  1, DELIMITER = Comp_Sep};
+UNB_0004        :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+UNB_0007_01     :  STRINGA {MAXLENGTH =  4, DELIMITER = Comp_Sep};
+UNB_0008        :  STRINGA {MAXLENGTH = 14, DELIMITER = Comp_Sep};
+UNB_0010        :  STRINGA {MAXLENGTH = 35, DELIMITER = Comp_Sep};
+UNB_0007_02     :  STRINGA {MAXLENGTH =  4, DELIMITER = Comp_Sep};
+UNB_0014        :  STRINGA {MAXLENGTH = 14, DELIMITER = Comp_Sep};
+UNB_0017        : NSTRINGA {MAXLENGTH =  6, DELIMITER = Comp_Sep, PICTURE="YYMMDD", DEFAULT = "      "};
+UNB_0019        : NSTRINGA {MAXLENGTH =  4, DELIMITER = Comp_Sep, PICTURE="HHNN"  , DEFAULT = "    "  };
+UNB_0020        :  STRINGA {MAXLENGTH = 14, DELIMITER = Data_Sep};
+UNB_0022        :  STRINGA {MAXLENGTH = 14, DELIMITER = Comp_Sep};
+UNB_0025        :  STRINGA {MAXLENGTH =  2, DELIMITER = Comp_Sep};
+UNB_0026        :  STRINGA {MAXLENGTH = 14, DELIMITER = Data_Sep};
+UNB_0029        :  STRINGA {MAXLENGTH =  1, DELIMITER = Data_Sep};
+UNB_0031        : NSTRINGA {MAXLENGTH =  1, DELIMITER = Data_Sep};
+UNB_0032        :  STRINGA {MAXLENGTH = 35, DELIMITER = Data_Sep};
+UNB_0035        : NSTRINGA {MAXLENGTH =  1, DELIMITER = Data_Sep};
+
+#---------------------------------------------------------------------------------------------------------------#
+#       UNH                                                                                                     #
+#---------------------------------------------------------------------------------------------------------------#
+UNH {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+        idUNH           +    1
+        UNH_0062        =    1
+        UNH_S009        =    1
+        UNH_0068        *    1
+        UNH_S010        *    1;
+
+UNH_S009 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        UNH_0065        =    1
+        UNH_0052        =    1
+        UNH_0054        =    1
+        UNH_0051        =    1
+        UNH_0057        *    1;
+
+UNH_S010 {DELIMITER = Data_Sep, SHORTEN = Comp_Sep}:
+        UNH_0070        =    1
+        UNH_0073        *    1;
+
+idUNH           :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "UNH"};
+UNH_0062        :  STRINGA {MAXLENGTH = 14, DELIMITER = Data_Sep};
+UNH_0065        :  STRINGA {MAXLENGTH =  6, DELIMITER = Comp_Sep};
+UNH_0052        :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+UNH_0054        :  STRINGA {MAXLENGTH =  3, DELIMITER = Comp_Sep};
+UNH_0051        :  STRINGA {MAXLENGTH =  2, DELIMITER = Comp_Sep};
+UNH_0057        :  STRINGA {MAXLENGTH =  6, DELIMITER = Comp_Sep};
+UNH_0068        :  STRINGA {MAXLENGTH = 35, DELIMITER = Data_Sep};
+UNH_0070        : NSTRINGA {MAXLENGTH =  2, DELIMITER = Comp_Sep};
+UNH_0073        :  STRINGA {MAXLENGTH =  1, DELIMITER = Comp_Sep};
+
+#---------------------------------------------------------------------------------------------------------------#
+#       UNT                                                                                                     #
+#---------------------------------------------------------------------------------------------------------------#
+UNT {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+        idUNT
+        UNT_0074        =    1
+        UNT_0062        =    1;
+
+idUNT           :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "UNT"};
+UNT_0074        : NSTRINGA {MAXLENGTH =  6, DELIMITER = Data_Sep};
+UNT_0062        :  STRINGA {MAXLENGTH = 14, DELIMITER = Data_Sep};
+
+#---------------------------------------------------------------------------------------------------------------#
+#       UNZ                                                                                                     #
+#---------------------------------------------------------------------------------------------------------------#
+UNZ {DELIMITER = Seg_Terminator, ESCAPE = Release_Ind, SHORTEN = Data_Sep}:
+        idUNZ
+        UNZ_0036        =    1
+        UNZ_0020        =    1;
+
+idUNZ           :  STRINGA {MAXLENGTH =  3, DELIMITER = Data_Sep, DEFAULT = "UNZ"};
+UNZ_0036        : NSTRINGA {MAXLENGTH =  6, DELIMITER = Data_Sep};
+UNZ_0020        :  STRINGA {MAXLENGTH = 14, DELIMITER = Data_Sep};
+

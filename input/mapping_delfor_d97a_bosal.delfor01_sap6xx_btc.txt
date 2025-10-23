@@ -1,0 +1,1464 @@
+#---------------------------------------------------------------------------------------------------------------#
+# EDIFACT DELFOR D97A  ->   SAP IDOC DELFOR01                                                                   #
+# (c) 2007 Business Technology Consulting AG                                                                    #
+#---------------------------------------------------------------------------------------------------------------#
+# formatdescription src         = delfor_d97a_gm_mgo                                                            #
+# formatdescription dest        = delfor01_sap46x                                                               #
+# trantab/mapping               = delfor_d97a_gm_mgo.delfor01_sap46x                                            #
+# tftab                         = partner_'SYS_CLN'                                                             #
+#                               = modifications_'PARTNER'_'SYS_CLN'                                             #
+# Vorbrenner                    =                                                                               #
+#---------------------------------------------------------------------------------------------------------------#
+#!FGFLAGS=1
+#
+# BESCHREIBUNG
+#
+# Lieferabrufe : GM MGO
+# 
+# DELFOR werden bei GM nur als reine Vorschau benutzt.
+# Fuer Abrufe wird die DELJIT Nachricht (PUS oder SH) benutzt 
+#
+# Aenderungen: 
+#
+# AN 2007.05.14
+# - Anpassungen in der Quell- und Zielformatbeschreibung fuer die GM DELFOR D97A Nachricht
+#   Nicht verwendete Segmente in Quellformatbeschreibung deaktiviert.
+#
+# BTC/MS 17.06.2016
+# OTRS 2016061674000265
+# Aktuell kommt nur 1 letzter Lieferschein, daher Abbildung nach BELNR und LIDTL.
+# In Formatbeschreibung SG13 von 10 auf 1 mal geaendet. Sollten mal mehr als 1 letzter
+# Lieferschein kommen, muss das anders gemacht werden.
+# Die schicken das aber strukturell falsch in RFF_04 statt RFF_05 (unterhalb SG15, QTY_01)
+# wo es hingehoert.
+#
+# BTC/CB 13.03.2019
+# OTRS 2019012574000233 
+# Anpassungen nach Systemmigration durch BOSAL: letzter Lieferschein nun wieder korrekt in RFF_05
+# Abruf gültig ab ABRAB gemappt auf DTM+137. Vorher nur auf DTM+158, das war aber nicht vorhanden.
+# Nun wird erst DTM+137 herangezogen und mit DTM+158 überschrieben nur wenn dieses vorhanden.
+#
+#
+#---------------------------------------------------------------------------------------------------------------#
+#        Variablen                                                                                              #
+#---------------------------------------------------------------------------------------------------------------#
+
+[
+
+# Externe Variablen
+
+        PARTNER           :  STRINGA { MAXLENGTH =  16 };
+        partner           :  STRINGA { MAXLENGTH =  16 };
+        MANDT             :  STRINGA { LENGTH    =   3 };
+        mandt             :  STRINGA { LENGTH    =   3, DEFAULT = "000" };
+        SYS_CLN           :  STRINGA { MAXLENGTH =  15 };
+        RCVPOR            :  STRINGA { MAXLENGTH =  10 };
+        RCVPRT            :  STRINGA { MAXLENGTH =   2 };
+        RCVPRN            :  STRINGA { MAXLENGTH =  10 };
+        RCVPFC            :  STRINGA { MAXLENGTH =   2 };
+        SNDPOR            :  STRINGA { MAXLENGTH =  10 };
+        SNDPRT            :  STRINGA { MAXLENGTH =   2 };
+        SNDPRN            :  STRINGA { MAXLENGTH =  10 };
+        SNDPFC            :  STRINGA { MAXLENGTH =   2 };
+        TESTKEZI          :  STRINGA { LENGTH    =   1 };
+        ARCHIV_KEY        :  STRINGA { MAXLENGTH = 250, DEFAULT = "" };
+
+# Systemvariablen
+
+        sysdate           : NSTRINGA { LENGTH    =   8, PICTURE="YYYYMMDD", SOURCE=SYS_DATE };
+        systime           : NSTRINGA { LENGTH    =   6, PICTURE="HHNNSS",   SOURCE=SYS_TIME };
+
+# Zaehler
+
+        cnt_err           :  BINARY  { LENGTH    =   4 };
+        cnt_txt           :  BINARY  { LENGTH    =   4 };
+        cnt_lfs           :  BINARY  { LENGTH    =   4 };
+
+# Puffervariablen
+
+        partnertab        :  STRINGA { MAXLENGTH =  50 };
+        modifications     :  STRINGA { MAXLENGTH =  50 };
+        sender            :  STRINGA { MAXLENGTH =  40 };
+        receiver          :  STRINGA { MAXLENGTH =  40 };
+        filedate          :  STRINGA { MAXLENGTH =   8 };
+        filetime          :  STRINGA { MAXLENGTH =   4 };
+        debitor           :  STRINGA { MAXLENGTH =  10 };
+        docdate           :  STRINGA { LENGTH    =   8, PICTURE = "YYYYMMDD" };
+        startdate         :  STRINGA { LENGTH    =   8, PICTURE = "YYYYMMDD" };
+        enddate           :  STRINGA { LENGTH    =   8, PICTURE = "YYYYMMDD" };
+        message_typ       :  STRINGA { MAXLENGTH =   3 };
+        message_ref       :  STRINGA { MAXLENGTH =  35 };
+        ktext1            :  STRINGA { MAXLENGTH = 250 };
+        ktext2            :  STRINGA { MAXLENGTH = 250 };
+        ktext3            :  STRINGA { MAXLENGTH = 250 };
+        ktext4            :  STRINGA { MAXLENGTH = 250 };
+        ktext5            :  STRINGA { MAXLENGTH = 250 };
+        ag_nummer         :  STRINGA { MAXLENGTH =  20 };
+        ag_name           :  STRINGA { MAXLENGTH =  35 };
+        lf_nummer         :  STRINGA { MAXLENGTH =  20 };
+        lf_name           :  STRINGA { MAXLENGTH =  35 };
+        ob_nummer         :  STRINGA { MAXLENGTH =  20 };
+        ob_name           :  STRINGA { MAXLENGTH =  35 };
+        we_nummer         :  STRINGA { MAXLENGTH =  20 };
+        we_name           :  STRINGA { MAXLENGTH =  35 };
+        we_ablad          :  STRINGA { MAXLENGTH =  35 };
+        labky             :  STRINGA { LENGTH    =   1 };
+#        screl             :  STRINGA { LENGTH    =   2 };
+        vrkme             :  STRINGA { MAXLENGTH =   5 };
+        akuem             : NSTRINGA { MAXLENGTH =  15, PICTURE = "&-------------9" };
+        ult_mat           :  STRINGA { MAXLENGTH =  35 };
+        model_year        :  STRINGA { MAXLENGTH =  35 };
+        kanban            :  STRINGA { MAXLENGTH =  35 };
+        abrab             :  STRINGA { MAXLENGTH =   8, PICTURE = "YYYYMMDD" };  
+        frequenz          :  STRINGA { MAXLENGTH =   2 };
+        edatuv            :  STRINGA { MAXLENGTH =   8, PICTURE = "YYYYMMDD" };  
+        edatub            :  STRINGA { MAXLENGTH =   8, PICTURE = "YYYYMMDD" };  
+        ezeit             :  STRINGA { MAXLENGTH =   4, PICTURE = "HHNN" };  
+        prgrs             :  STRINGA { MAXLENGTH =   1 };
+        ettyp             :  STRINGA { MAXLENGTH =   1 };
+        teart             :  STRINGA { MAXLENGTH =   1 };
+        etvtf             :  STRINGA { MAXLENGTH =   2 };
+        temp              :  STRINGA { MAXLENGTH =  35 };
+
+# Flags and keys
+
+        key_tmp           :  STRINGA { MAXLENGTH =  10 };
+        key_grp           :  STRINGA { MAXLENGTH =  10 };
+        pos               : NSTRINGA { MAXLENGTH =   1 };
+        err               : NSTRINGA { MAXLENGTH =   1 };
+        
+]
+
+#---------------------------------------------------------------------------------------------------------------#
+#        NON-terminale Abbildungen                                                                              #
+#---------------------------------------------------------------------------------------------------------------#
+
+# LIN Segment erzeugt ein neues Idoc
+# LIN          -->        IDOC
+SG12
+        : SAPIDOC ; 
+
+# QTY Gruppen aus Gruppe SCC+1 und SCC+4 erzeugen E2EDP16
+# SG18         -->        GP16
+SG18
+        : GP16 ;
+
+#---------------------------------------------------------------------------------------------------------------#
+#        INFO, INIT VAR, FLAGS AND KEYS                                                                         #
+#---------------------------------------------------------------------------------------------------------------#
+idUNB
+        { PARTNER = partner }
+        ? ( PARTNER = "" )
+        : ;
+
+idUNB
+        { MANDT = mandt }
+        ? ( MANDT = "" )
+        : ;
+
+idUNB
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Konvertierung fuer Partner -", PARTNER, "- nicht zertifiziert." )
+          , PRINT ( "F*Bitte erst pruefen und Konvertierungsprogramm erweitern !!")
+          , PRINT ( "F*Transformator wird mit EXIT 1 abgebrochen !")
+          , PRINT ( "F*================================================================================")
+          , EXIT (1)
+        }
+        ? ( idUNB != "" & ( ! PARTNER IN ["BOSAL"] ))
+        : ;
+
+idUNB
+        {   partnertab = CONCAT ( "partner_", SYS_CLN )
+          , modifications = CONCAT ( "modifications_", PARTNER, "_", SYS_CLN )
+        }
+        ? ( idUNB != "" )
+        : ;
+
+idUNB
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Ersetzungstabelle '", partnertab, "' existiert nicht !" )
+          , PRINT ( "F*Transformator wird mit EXIT 1 abgebrochen !")
+          , PRINT ( "F*================================================================================")
+          , EXIT (1)
+        }
+        ? ( TAB ( "TABELLE", partnertab ) != partnertab )
+        : ;
+
+idUNB
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Ersetzungstabelle '", modifications, "' existiert nicht !" )
+          , PRINT ( "F*Transformator wird mit EXIT 1 abgebrochen !")
+          , PRINT ( "F*================================================================================")
+          , EXIT (1)
+        }
+        ? ( TAB ( "TABELLE", modifications ) != modifications )
+        : ;
+
+UNB_0004        { sender = UNB_0004 }   ? ( UNB_0004 >= "" )    : ;
+UNB_0010        { receiver = UNB_0010 } ? ( UNB_0010 >= "" )    : ;
+UNB_0017        { filedate = UNB_0017 } ? ( UNB_0017 >= "" )    : ;
+UNB_0019        { filetime = UNB_0019 } ? ( UNB_0019 >= "" )    : ;
+
+UNB_0020
+        {   PRINT ( "I*================================================================================")
+          , PRINT ( "I*PARTNERTABELLE             : ", partnertab )
+          , PRINT ( "I*ERSETZUNGSTABELLE          : ", modifications )
+          , PRINT ( "I*" )
+          , PRINT ( "I*SENDER CODE                : ", sender   )
+          , PRINT ( "I*RECEIVER CODE              : ", receiver )
+          , PRINT ( "I*UEBERTRAGUNGSDATUM         : ", filedate )
+          , PRINT ( "I*UEBERTRAGUNGSZEIT          : ", filetime )
+          , PRINT ( "I*UEBERTRAGUNGSREFERENZ      : ", UNB_0020 )
+        }
+        ? ( UNB_0020 >= "" )
+        : ;
+
+UNB_0026
+        {   PRINT ( "I*ANWENDUNGSREFERENZ         : ", UNB_0026 ) }
+        ? ( UNB_0026 >= "" )
+        : ;
+
+#---------------------------------------------------------------------------------------------------------------#
+#        Einlesen der Segmentqualifier                                                                          #
+#---------------------------------------------------------------------------------------------------------------#
+
+DTM_01_2005     { key_tmp = DTM_01_2005 }                               ? ( DTM_01_2005 >= "" ) : ;
+FTX_01_4451     { key_tmp = FTX_01_4451 }                               ? ( FTX_01_4451 >= "" ) : ;
+NAD_01_3035     { key_tmp = NAD_01_3035 }                               ? ( NAD_01_3035 >= "" ) : ;
+NAD_02_3035     { key_tmp = NAD_02_3035 }                               ? ( NAD_02_3035 >= "" ) : ;
+# PIA hier kommt zuerst der Wert dann der Qual.
+PIA_7140        { temp = PIA_7140 }                                     ? ( PIA_7140 >= "" )    : ;
+PIA_7143        { ult_mat = temp }                                      ? ( PIA_7143 = "UA")    : ;
+PIA_7143        { model_year = temp }                                   ? ( PIA_7143 = "RY")    : ;
+PIA_7143        { kanban = temp }                                       ? ( PIA_7143 = "MP")    : ;
+LOC_02_3227     { key_tmp = LOC_02_3227 }                               ? ( LOC_02_3227 >= "" ) : ;
+FTX_03_4451     { key_tmp = FTX_03_4451 }                               ? ( FTX_03_4451 >= "" ) : ;
+RFF_04_1153     { key_tmp = RFF_04_1153 }                               ? ( RFF_04_1153 >= "" ) : ;
+RFF_05_1153     { key_tmp = RFF_05_1153, key_grp = RFF_05_1153 }        ? ( RFF_05_1153 >= "" ) : ;
+QTY_01_6063     { key_tmp = QTY_01_6063, key_grp = QTY_01_6063 }        ? ( QTY_01_6063 >= "" ) : ;
+QTY_02_6063     { key_tmp = QTY_02_6063, key_grp = QTY_02_6063 }        ? ( QTY_02_6063 >= "" ) : ;
+DTM_09_2005     { key_tmp = DTM_09_2005 }                               ? ( DTM_09_2005 >= "" ) : ;
+DTM_11_2005     { key_tmp = CONCAT (key_grp, "-", DTM_11_2005) }        ? ( DTM_11_2005 >= "" ) : ;
+DTM_12_2005     { key_tmp = CONCAT (key_grp, "-", DTM_12_2005) }        ? ( DTM_12_2005 >= "" ) : ;
+SCC_01_4017     { key_tmp = SCC_01_4017 }                               ? ( SCC_01_4017 >= "" ) : ;
+QTY_02_6063     { key_tmp = QTY_02_6063, key_grp = QTY_02_6063 }        ? ( QTY_02_6063 >= "" ) : ;
+DTM_13_2005     { key_tmp = DTM_13_2005 }                               ? ( DTM_13_2005 >= "" ) : ;
+SCC_01b_4017    { key_tmp = SCC_01b_4017 }                              ? ( SCC_01b_4017 >= "") : ; 
+QTY_02b_6063    { key_tmp = QTY_02b_6063, key_grp = QTY_02b_6063 }      ? ( QTY_02b_6063 >= "") : ;
+DTM_13b_2005    { key_tmp = DTM_13b_2005 }                              ? ( DTM_13b_2005 >= "") : ;
+SCC_01c_4017    { key_tmp = SCC_01c_4017 }                              ? ( SCC_01c_4017 >= "") : ;
+QTY_02c_6063    { key_tmp = QTY_02c_6063, key_grp = QTY_02c_6063 }      ? ( QTY_02c_6063 >= "") : ;
+DTM_13c_2005    { key_tmp = DTM_13c_2005 }                              ? ( DTM_13c_2005 >= "") : ;
+QTY_03_6063     { key_tmp = QTY_03_6063 }                               ? ( QTY_03_6063 >= "" ) : ;
+
+
+#---------------------------------------------------------------------------------------------------------------#
+#        Prüfen der Segmentqualifier                                                                            #
+#---------------------------------------------------------------------------------------------------------------#
+# Nachrichtentyp
+BGM_1001
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Nachrichtentyp ", BGM_1001, " kann nicht verarbeitet werden !!" )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err)
+        }
+        ? ( ! BGM_1001 IN [ "241" ] )
+        : ;
+
+# BGM_1000
+# Nicht geprüft, immer PS (planed shipment based - no authorisation to ship)
+
+# Nachrichtenfunktion
+# 4 - Change; 5 Replace
+BGM_1225
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*BGM Nachrichtenfunktion ", BGM_1225, " kann nicht verarbeitet werden !" )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err)
+        }
+        ? ( ! BGM_1225 IN [ "5","9" ] )
+        : ;
+
+# Nachrichtenerstellungsdatum
+# Gültigkeitszeitraum der Einteilungen von - bis
+DTM_01_2005
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Nicht spezifizierter Segmentqualifier im Segment DTM_01 : ", DTM_01_2005 )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err)
+        }
+        ? ( ! DTM_01_2005 IN ["137","158","159"] )
+        : ;
+
+DTM_01_2379
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Nicht spezifizierter Formatqualifier im Segment DTM_01  : ", DTM_01_2379 )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err)
+        }
+        ? ( ! DTM_01_2379 IN ["203"] )
+        : ;
+
+# Kopftext
+FTX_01_4451    
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Nicht spezifizierter Segmentqualifier im Segment FTX_01 : ", FTX_01_4451 )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err)
+        }
+        ? ( ! FTX_01_4451 IN ["AAI"] )
+        : ;
+
+# Code/Name: Supplier, Material Isuer, Ordered by
+NAD_01_3035
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Nicht spezifizierter Segmentqualifier im Segment NAD_01 : ", NAD_01_3035 )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err)
+        }
+        ? ( ! NAD_01_3035 IN ["SU","MI","OB","BY"] )
+        : ;
+
+# Action: 36 - changed; 37 - complete
+GIS_7365
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Nicht spezifizierter Segmentqualifier im Segment GIS    : ", GIS_7365 )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err)
+        }
+        ? ( ! GIS_7365 IN ["37"] )
+        : ;
+
+# Code/Name: Ship to
+NAD_02_3035
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Nicht spezifizierter Segmentqualifier im Segment NAD_02 : ", NAD_02_3035 )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err)
+        }
+        ? ( ! NAD_02_3035 IN ["ST"] )
+        : ;
+
+# LIN
+LIN_7143
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Nicht spezifizierter Segmentqualifier im Segment LIN    : ", LIN_7143 )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err)
+        }
+        ? ( ! LIN_7143 IN ["IN"] )
+        : ;
+
+PIA_7143
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Nicht spezifizierter Segmentqualifier im Segment PIA    : ", PIA_7143 )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err)
+        }
+        ? ( ! PIA_7143 IN ["RY","UA","MP","SA"] )
+        : ;
+
+# Abladestelle, Verbauort
+LOC_02_3227
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Nicht spezifizierter Segmentqualifier im Segment LOC_02 : ", LOC_02_3227 )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err)
+        }
+        ? ( ! LOC_02_3227 IN ["11","159"] )
+        : ;
+
+# Positionstext
+FTX_03_4451    
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Nicht spezifizierter Segmentqualifier im Segment FTX_03 : ", FTX_03_4451 )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err)
+        }
+        ? ( ! FTX_03_4451 IN ["AAI"] )
+        : ;
+
+# Kontrakt
+RFF_04_1153
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Nicht spezifizierter Segmentqualifier im Segment RFF_04 : ", RFF_04_1153 )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err)
+        }
+        ? ( ! RFF_04_1153 IN ["ON","AAN","AIF"] )
+        : ;
+
+# Abrufnummer
+RFF_05_1153
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Nicht spezifizierter Segmentqualifier im Segment RFF_05 : ", RFF_05_1153 )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err)
+        }
+        ? ( ! RFF_05_1153 IN ["AAU"] )
+        : ;
+
+# EFZ, Best. Menge kummuliert 
+QTY_01_6063
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Nicht spezifizierter Segmentqualifier im Segment QTY_01 : ", QTY_01_6063 )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err)
+        }
+        ? ( ! QTY_01_6063 IN ["3","79","70","194","83"] )
+        : ;
+
+# kum. Beginndatum, kum. Enddatum, Datum letzter Lieferschein
+DTM_11_2005
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Nicht spezifizierter Segmentqualifier im Segment DTM_11 : ", key_tmp )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err)
+        }
+        ? ( DTM_11_2005 >= "" & ( ! key_tmp IN ["79-51","79-52","3-51","3-11","70-51","83-2"] ) )
+        : ;
+
+DTM_11_2379
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Nicht spezifizierter Formatqualifier im Segment DTM_11 - ", key_tmp,": ", DTM_11_2379 )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err)
+        }
+        ? ( ! DTM_11_2379 IN ["102","203"] )
+        : ;
+
+# Einteilungsmengen
+QTY_02_6063
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Nicht spezifizierter Segmentqualifier im Segment QTY_02 : ", QTY_02_6063 )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err)
+        }
+        ? ( ! QTY_02_6063 IN ["113"] )
+        : ;
+
+# Lieferdatum / Zeitraum
+DTM_13_2005
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Nicht spezifizierter Segmentqualifier im Segment DTM_13 : ", DTM_13_2005 )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err)
+        }
+        ? ( ! DTM_13_2005 IN ["2","158","159","10"] )
+        : ;
+
+DTM_13_2379
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Nicht spezifizierter Formatqualifier im Segment DTM_13 - ", key_tmp,": ", DTM_13_2379 )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err)
+        }
+        ? ( ! DTM_13_2379 IN ["102","203"] )
+        : ;
+
+
+# Fabrikationsfreigabe (kummulierte Menge bzw. Datumshorizont)
+QTY_02b_6063
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Nicht spezifizierter Segmentqualifier im Segment QTY_02 : ", QTY_02b_6063 )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err)
+        }
+        ? ( ! QTY_02b_6063 IN ["3"] )
+        : ;
+
+DTM_13b_2005
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Nicht spezifizierter Segmentqualifier im Segment DTM_13 : ", DTM_13b_2005 )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err)
+        }
+        ? ( ! DTM_13b_2005 IN ["51","52"] )
+        : ;
+
+DTM_13b_2379
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Nicht spezifizierter Formatqualifier im Segment DTM_13 - ", key_tmp,": ", DTM_13b_2379 )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err)
+        }
+        ? ( ! DTM_13b_2379 IN ["102","203"] )
+        : ;
+
+# Materialfreigabe (kummulierte Menge bzw. Datumshorizont)
+QTY_02c_6063
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Nicht spezifizierter Segmentqualifier im Segment QTY_02 : ", QTY_02c_6063 )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err)
+        }
+        ? ( ! QTY_02c_6063 IN ["3"] )
+        : ;
+
+DTM_13c_2005
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Nicht spezifizierter Segmentqualifier im Segment DTM_13 : ", DTM_13c_2005 )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err)
+        }
+        ? ( ! DTM_13c_2005 IN ["51","52"] )
+        : ;
+
+DTM_13c_2379
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Nicht spezifizierter Formatqualifier im Segment DTM_13 - ", key_tmp,": ", DTM_13c_2379 )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err)
+        }
+        ? ( ! DTM_13c_2379 IN ["102","203"] )
+        : ;
+
+# Max. Füllmenge des zu verwendenden Packmittels
+QTY_03_6063
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Nicht spezifizierter Segmentqualifier im Segment QTY_03 : ", QTY_03_6063 )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err)
+        }
+        ? ( ! QTY_03_6063 IN ["52"] )
+        : ;
+
+# Gruppenzaehler letzte Lieferung
+QTY_01_6063
+        { INC (cnt_lfs) }
+        ? ( QTY_01_6063 = "194" ) 
+        : ;
+
+#---------------------------------------------------------------------------------------------------------------#
+#        Variablen löschen                                                                                      #
+#---------------------------------------------------------------------------------------------------------------#
+# Nachrichtenkopf
+idUNH
+        {   message_typ = "", message_ref = ""
+          , docdate = filedate, startdate = "00000000", enddate = "00000000"
+          , ag_nummer = "", ag_name = "", lf_nummer = "", lf_name = "", ob_nummer = "", ob_name = ""
+          , ktext1 = "", ktext2 = "", ktext3 = "", ktext4 = "", ktext5 = "" 
+        }
+        ? ( idUNH >= "" )
+        : ;
+
+# Neuer Warenempfänger
+idNAD_02
+        {   debitor = "", we_nummer = "", we_name = "" }
+        ? ( idNAD_02 >= "" )
+        : ;
+
+# Neue Position
+idLIN
+        {   ult_mat = "", model_year = "", kanban = "", pos = 0, err = 0, abrab = startdate
+          , we_ablad = "", vrkme ="", akuem = " "
+        }
+        ? ( idLIN >= "" )
+        : ;
+
+idSCC_01
+        { frequenz = "", ettyp = "" }
+        ? ( idSCC_01 >= "" )
+        : ;
+
+# Neue Einteilung
+idQTY_02
+        { edatuv = "00000000", edatub = "00000000", ezeit = "0000", prgrs = ""  }
+        ? ( idQTY_02 = "" )
+        : ;
+
+
+#---------------------------------------------------------------------------------------------------------------#
+#        Puffern der Kopfdaten                                                                                  #
+#---------------------------------------------------------------------------------------------------------------#
+# Nachrichtentyp und Referenznummer
+BGM_1001
+        {message_typ = BGM_1001 }
+        ? ( BGM_1001 != "" )
+        : ;
+
+BGM_1004
+        { message_ref = BGM_1004 }
+        ? ( BGM_1004 != "" )
+        : ;
+
+# Erstellungsdatum der Nachricht
+DTM_01_2380
+        { docdate = SUBSTR(DTM_01_2380, 0, 8), startdate = SUBSTR(DTM_01_2380, 0, 8)}
+        ? ( DTM_01_2380 >= "" & key_tmp = "137" )
+        : ;
+
+# Gueltigkeits-Startdatum des Abrufs
+DTM_01_2380
+        { startdate = SUBSTR(DTM_01_2380, 0, 8) }
+        ? ( DTM_01_2380 >= "" & key_tmp = "158" )
+        : ;
+
+# Gueltigkeits-Enddatum des Abrufs
+DTM_01_2380
+        { enddate = SUBSTR(DTM_01_2380, 0, 8) }
+        ? ( DTM_01_2380 >= "" & key_tmp = "159" )
+        : ;
+
+# KOPFTEXTE
+idFTX_01
+        { cnt_txt = cnt_txt + 1 }
+        ? ( idFTX_01 >= "" )
+        : ;
+
+FTX_01_4440
+        { ktext1 = CONCAT(ktext1, " ", FTX_01_4440) }
+        ? ( FTX_01_4440 >= "" & cnt_txt = 1 )
+        : ;
+
+FTX_01_4440
+        { ktext2 = CONCAT(ktext2, " ", FTX_01_4440) }
+        ? ( FTX_01_4440 >= "" & cnt_txt = 2 )
+        : ;
+
+FTX_01_4440
+        { ktext3 = CONCAT(ktext3, " ", FTX_01_4440) }
+        ? ( FTX_01_4440 >= "" & cnt_txt = 3 )
+        : ;
+
+FTX_01_4440
+        { ktext4 = CONCAT(ktext4, " ", FTX_01_4440) }
+        ? ( FTX_01_4440 >= "" & cnt_txt = 4 )
+        : ;
+
+FTX_01_4440
+        { ktext5 = CONCAT(ktext5, " ", FTX_01_4440) }
+        ? ( FTX_01_4440 >= "" & cnt_txt = 5 )
+        : ;
+
+
+
+# Lieferantennummer
+NAD_01_3039
+        { lf_nummer = NAD_01_3039  }
+        ? ( NAD_01_3039 >= "" & key_tmp = "SU" )
+        : ;
+
+NAD_01_3036_01
+        { lf_name = NAD_01_3036_01  }
+        ? ( NAD_01_3036_01 >= "" & key_tmp = "SU" )
+        : ;
+
+# Kaeufer, Auftraggeber
+NAD_01_3039
+        { ag_nummer = NAD_01_3039 }
+        ? ( NAD_01_3039 >= "" & key_tmp = "BY" )
+        : ;
+
+NAD_01_3036_01
+        { ag_name = NAD_01_3036_01  }
+        ? ( NAD_01_3036_01 >= "" & key_tmp = "BY" )
+        : ;
+
+# Material Isuer
+NAD_01_3039
+        { ob_nummer = NAD_01_3039 }
+        ? ( NAD_01_3039 >= "" & key_tmp = "OB" )
+        : ;
+
+NAD_01_3036_01
+        { ob_name = NAD_01_3036_01  }
+        ? ( NAD_01_3036_01 >= "" & key_tmp = "OB" )
+        : ;
+
+# Zu prüfen !!
+#GIS_7365
+#        { labky = 1 }
+#        ? ( GIS_7365 = "36" )
+#        : ;
+
+GIS_7365
+        { labky = 2 }
+        ? ( GIS_7365 = "37" )
+        : ;
+
+# Warenempfaenger - Werk, Ship to
+NAD_02_3039
+        {   we_nummer = NAD_02_3039
+          , PRINT ( "I*================================================================================")
+          , PRINT ( "I*MATERIAL ISSUER            : ", SUBSTR(ag_nummer,0,15), ag_name )
+          , PRINT ( "I*ORDERED BY                 : ", SUBSTR(ob_nummer,0,15), ob_name )
+          , PRINT ( "I*SUPPLIER                   : ", SUBSTR(lf_nummer,0,15), lf_name )
+          , PRINT ( "I*PLANT                      : ", SUBSTR(we_nummer,0,15) )
+          , PRINT ( "I*")
+        }
+        ? ( NAD_02_3039 >= "" & key_tmp = "ST" )
+        : ;
+
+NAD_02_3036_01
+        { we_name = NAD_02_3036_01 }
+        ? ( NAD_02_3036_01 >= "" & key_tmp = "ST" )
+        : ;
+
+#---------------------------------------------------------------------------------------------------------------#
+# Ermitteln der SAP Debitorennummer ueber die Ersetzungstabelle 'partner'
+# Wird benötigt wenn SNDPRN in Konfig nicht belegt wird, bzw. wenn dynamisch zugeordnet werden soll !
+# Erst ueber Werk pruefen ...
+idLIN
+        {   debitor = SUBSTR(TAB(CONCAT("DELFOR-D97A-",PARTNER,"-",lf_nummer,"-",ag_nummer,"-",we_nummer), partnertab),0,10)
+          , PRINT ( "I*================================================================================")
+          , PRINT ( "I*DEBITOR (W): DELFOR-D97A-",PARTNER,"-",lf_nummer,"-",ag_nummer,"-",we_nummer,"=",debitor )
+          , PRINT ( "I*================================================================================")
+        }
+        ? (   idLIN >= ""
+            & SNDPRN = ""
+            & TAB(CONCAT("DELFOR-D97A-",PARTNER,"-",lf_nummer,"-",ag_nummer,"-",we_nummer), partnertab) != ""
+          )
+        : ;
+
+# ... dann ueber Abladestelle
+LOC_02_3225
+        {   debitor = SUBSTR(TAB(CONCAT("DELFOR-D97A-",PARTNER,"-",lf_nummer,"-",ag_nummer,"-",we_nummer,"-",LOC_02_3225), partnertab ),0,10)
+          , PRINT ( "I*================================================================================")
+          , PRINT ( "I*DEBITOR (A): DELFOR-D97A-",PARTNER,"-",lf_nummer,"-",ag_nummer,"-",we_nummer,"-",LOC_02_3225,"=",debitor )
+          , PRINT ( "I*================================================================================")
+        }
+        ? (   LOC_02_3225 >= ""
+            & key_tmp = "11"
+            & debitor = ""
+            & SNDPRN  = ""
+            &  TAB(CONCAT("DELFOR-D97A-",PARTNER,"-",lf_nummer,"-",ag_nummer,"-",we_nummer,"-",LOC_02_3225), partnertab ) != ""
+          )
+        : ;
+
+# Wenn SNDPRN extern übergeben wurde diesen Wert verwenden !
+# Wenn SNDPRN gefuellt dann diese Info verwenden !
+idLIN
+        {   PRINT ( "I*================================================================================")
+          , PRINT ( "I*Debitoren Zuordnung aus Konfiguration 'SNDPRN' : ", SNDPRN )
+          , PRINT ( "I*================================================================================")
+          , debitor = SNDPRN
+        }
+        ? ( idLIN != "" & SNDPRN != ""  )
+        : ;
+
+idQTY_02
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Bitte Ersetzungstabelle '", partnertab, "' pflegen !")
+          , PRINT ( "F*DELFOR-D97A-", PARTNER ,"-", lf_nummer, "-", ag_nummer, "-", we_nummer, "[-",we_ablad ,"]=" )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err), pos = "1"
+        }
+        ? ( idQTY_02 != "" & SNDPRN = "" & debitor = "" & pos = "0" ) 
+        : ;
+
+
+#---------------------------------------------------------------------------------------------------------------#
+#        EDI_DC40                                                                                               #
+#---------------------------------------------------------------------------------------------------------------#
+
+MANDT
+        ? ( idLIN >= "" )
+        : EDI_DC40_MANDT ;
+
+RCVPOR
+        : EDI_DC40_RCVPOR ;
+
+RCVPRT
+        : EDI_DC40_RCVPRT ;
+
+( TAB ( CONCAT ( "RCVPRN-E-", lf_nummer ), modifications ) = "" ?  RCVPRN :  TAB ( CONCAT ( "RCVPRN-E-", lf_nummer ), modifications ) )
+        : EDI_DC40_RCVPRN ;
+
+idUNT
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Bitte Ersetzungstabelle '", modifications, "' pflegen !")
+          , PRINT ( "F*RCVPRN-E-", lf_nummer,"='WERT FUER FELD RCVPRN IM IDOC-KONTROLLSATZ'" )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err)
+        }
+        ? ( TAB ( CONCAT ( "RCVPRN-E-", lf_nummer ), modifications ) = "" )
+        : ;
+
+RCVPFC
+        : EDI_DC40_RCVPFC ;
+
+SNDPOR
+        : EDI_DC40_SNDPOR ;
+
+SNDPRT
+        : EDI_DC40_SNDPRT ;
+
+debitor
+        : EDI_DC40_SNDPRN ;
+
+SNDPFC
+        : EDI_DC40_SNDPFC ;
+
+"46B"
+        : EDI_DC40_DOCREL ;
+
+" "
+        : EDI_DC40_STD ;
+
+"    "
+        : EDI_DC40_STDVRS ;
+
+"DELINS"
+        : EDI_DC40_STDMES ;
+
+"DELINS"
+        : EDI_DC40_MESTYP ;
+
+"DELFOR01"
+        : EDI_DC40_IDOCTYP ;
+
+"CONN0000"
+        : EDI_DC40_CIMTYP ;
+
+"   "
+        : EDI_DC40_DOCREL ;
+
+"2"
+        : EDI_DC40_DIRECT ;
+
+TESTKEZI
+        : EDI_DC40_TEST ;
+
+sysdate
+        : EDI_DC40_CREDAT ;
+
+systime
+        : EDI_DC40_CRETIM ;
+
+ARCHIV_KEY
+        : EDI_DC40_ARCKEY ;
+
+
+#---------------------------------------------------------------------------------------------------------------#
+#        E2EDK09                                                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+MANDT
+        : E2EDK09_MANDT ;
+
+# Bestellnummer
+RFF_04_1154
+        ? ( RFF_04_1154 >= "" & key_tmp = "ON" )
+        : E2EDK09_VTRNR ;
+
+# Abrufnummer neu
+RFF_04_1154
+        ? ( RFF_04_1154 >= "" & key_tmp = "AAN" )
+        : E2EDK09_LABNK ;
+
+# Abrufnummer alt
+RFF_04_1154
+        ? ( RFF_04_1154 >= "" & key_tmp = "AIF" )
+        : E2EDK09_ABNRA ;
+
+# Abrufdatum / Bestelldatum
+docdate
+        : E2EDK09_BSTDK ;
+
+# Nullstellungsdatum
+SUBSTR ( DTM_11_2380, 0, 8 )
+        ? ( DTM_11_2380 >= "" & key_tmp = "79-51" )
+        : E2EDK09_CYDAT ;
+
+# Abrufverwendungskennzeichen
+#        : E2EDK09_ABRVW ;
+
+
+#---------------------------------------------------------------------------------------------------------------#
+#        Z274K09        BTC CONNECT ZUSATZDATEN (KOPF)                                                          #
+#---------------------------------------------------------------------------------------------------------------#
+MANDT
+        : Z274K09_MANDT ;
+
+# Ergaenzende Sachnummer
+kanban
+        ? ( PIA_7143 = "MP" )
+        : Z274K09_ERGSNR ;
+
+
+#---------------------------------------------------------------------------------------------------------------#
+#        E2EDKA1  LF                                                                                            #
+#---------------------------------------------------------------------------------------------------------------#
+MANDT
+        : E2EDKA1_LF_MANDT ;
+
+# Lieferantennummer
+lf_nummer
+        ? ( idLIN >= "" )
+        : E2EDKA1_LF_PARTN ;
+
+lf_name
+        ? ( idLIN >= "" & lf_name != "" )
+        : E2EDKA1_LF_NAME1 ;
+
+
+#---------------------------------------------------------------------------------------------------------------#
+#        E2EDKA1  WE                                                                                            #
+#---------------------------------------------------------------------------------------------------------------#
+MANDT
+        : E2EDKA1_WE_MANDT ;
+
+# Lieferantennummer
+we_nummer
+        ? ( idLIN >= "" )
+        : E2EDKA1_WE_PARTN ;
+
+we_name
+        ? ( idLIN >= "" & we_name != "" )
+        : E2EDKA1_WE_NAME1 ;
+
+
+#---------------------------------------------------------------------------------------------------------------#
+#        E2EDKA1  OMI   Material issuer                                                                         #
+#---------------------------------------------------------------------------------------------------------------#
+MANDT
+        : E2EDKA1_OMI_MANDT ;
+
+# Odette Code des Auftraggebers
+ag_nummer
+        ? ( idLIN >= "" & ag_nummer != "" )
+        : E2EDKA1_OMI_PARTN ;
+
+ag_name
+        ? ( idLIN >= "" & ag_name != "" )
+        : E2EDKA1_OMI_NAME1 ;
+
+
+#---------------------------------------------------------------------------------------------------------------#
+#        E2EDKA1  OPB   Produced by                                                                             #
+#---------------------------------------------------------------------------------------------------------------#
+MANDT
+        : E2EDKA1_OPB_MANDT ;
+
+####---------------------------------------------------------------------------------------------------------------#
+####        E2EDKA1  OSU                                                                                           #
+####---------------------------------------------------------------------------------------------------------------#
+###MANDT
+###        : E2EDKA1_OSU_MANDT ;
+###
+###lf_nummer
+###        ? ( idLIN != "" & lf_nummer != "" )
+###        : E2EDKA1_OSU_PARTN ;
+###
+# Code
+#ob_nummer
+#        ? ( idLIN != "" )
+#        : E2EDKA1_OPB_PARTN ;
+
+#ob_name
+#        ? ( idLIN != "" )
+#        : E2EDKA1_OPB_NAME1 ;
+
+
+#---------------------------------------------------------------------------------------------------------------#
+#        E2EDK11  Kopftexte                                                                                     #
+#---------------------------------------------------------------------------------------------------------------#
+
+MANDT
+        : E2EDK11_MANDT ;
+
+SUBSTR(ktext1,  0,70)   ? ( idLIN >= "" & ktext1 != "" )        : E2EDK11_TXT01 ;
+SUBSTR(ktext1, 70,70)   ? ( idLIN >= "" & ktext1 != "" )        : E2EDK11_TXT02 ;
+SUBSTR(ktext1,140,70)   ? ( idLIN >= "" & ktext1 != "" )        : E2EDK11_TXT03 ;
+SUBSTR(ktext1,210,40)   ? ( idLIN >= "" & ktext1 != "" )        : E2EDK11_TXT04 ;
+
+SUBSTR(ktext2,  0,70)   ? ( idLIN >= "" & ktext2 != "" )        : E2EDK11_TXT01 ;
+SUBSTR(ktext2, 70,70)   ? ( idLIN >= "" & ktext2 != "" )        : E2EDK11_TXT02 ;
+SUBSTR(ktext2,140,70)   ? ( idLIN >= "" & ktext2 != "" )        : E2EDK11_TXT03 ;
+SUBSTR(ktext2,210,40)   ? ( idLIN >= "" & ktext2 != "" )        : E2EDK11_TXT04 ;
+
+SUBSTR(ktext3,  0,70)   ? ( idLIN >= "" & ktext3 != "" )        : E2EDK11_TXT01 ;
+SUBSTR(ktext3, 70,70)   ? ( idLIN >= "" & ktext3 != "" )        : E2EDK11_TXT02 ;
+SUBSTR(ktext3,140,70)   ? ( idLIN >= "" & ktext3 != "" )        : E2EDK11_TXT03 ;
+SUBSTR(ktext3,210,40)   ? ( idLIN >= "" & ktext3 != "" )        : E2EDK11_TXT04 ;
+
+SUBSTR(ktext4,  0,70)   ? ( idLIN >= "" & ktext4 != "" )        : E2EDK11_TXT01 ;
+SUBSTR(ktext4, 70,70)   ? ( idLIN >= "" & ktext4 != "" )        : E2EDK11_TXT02 ;
+SUBSTR(ktext4,140,70)   ? ( idLIN >= "" & ktext4 != "" )        : E2EDK11_TXT03 ;
+SUBSTR(ktext4,210,40)   ? ( idLIN >= "" & ktext4 != "" )        : E2EDK11_TXT04 ;
+
+SUBSTR(ktext5,  0,70)   ? ( idLIN >= "" & ktext5 != "" )        : E2EDK11_TXT01 ;
+SUBSTR(ktext5, 70,70)   ? ( idLIN >= "" & ktext5 != "" )        : E2EDK11_TXT02 ;
+SUBSTR(ktext5,140,70)   ? ( idLIN >= "" & ktext5 != "" )        : E2EDK11_TXT03 ;
+SUBSTR(ktext5,210,40)   ? ( idLIN >= "" & ktext5 != "" )        : E2EDK11_TXT04 ;
+
+"ZEDI"
+        : E2EDK11_TDNAME ;
+
+"004"
+        : E2EDK11_SPRAS ;
+
+#---------------------------------------------------------------------------------------------------------------#
+#        E2EDP10                                                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+MANDT
+        : E2EDP10_MANDT ;
+
+# Artikelnummer (Kunde)
+LIN_7140
+        : E2EDP10_IDNKD ;
+
+# Eingangsfz des Kunden
+QTY_01_6060
+        { akuem = SAPSTON(QTY_01_6060) }
+        ? ( QTY_01_6060 >= "" & key_tmp = "70" )
+        : ;
+
+( akuem < 0 ? 0 : akuem )
+        : E2EDP10_AKUEM ;
+
+# Verkaufsmengeneinheit
+vrkme
+        : E2EDP10_VRKME ;
+
+# Labky
+labky
+        : E2EDP10_LABKY ;
+
+# Liefer- / Feinabruf
+# Bei GM GME wird die DELFOR Nachricht nur als Forecast zum PUS gesendet und ist nicht Lieferrelevant
+"03"
+        : E2EDP10_SCREL ;
+
+# Ersetzungszeitraum Beginn
+abrab
+        : E2EDP10_ABRAB ;
+        
+# Ersetzungszeitraum Ende
+( edatub > enddate ? edatub : enddate )
+        : E2EDP10_ABRBI ;
+
+# Einteilungsart ( Versand- / Liefertermin )
+teart
+        : E2EDP10_TEART ;
+
+# Artikelnummer (Lieferant)
+        : E2EDP10_IDNLF ;
+
+# Bestelldatum des Kunden
+docdate
+        : E2EDP10_BSTDK ;
+
+# Materialfreigabe kummulierter Bedarf
+QTY_02c_6060
+        ? ( QTY_02c_6060 != "" )
+        : E2EDP10_MFRFZ ;
+
+# Materialfreigabe bis
+DTM_13c_2380
+        ? ( DTM_13c_2380 != "" & key_tmp = "52" )
+        : E2EDP10_ABMDE ;
+
+# Fertigungsfreigabe kummulierter Bedarf
+QTY_02b_6060
+        ? ( QTY_02b_6060 != "" )
+        : E2EDP10_MFADT ;
+
+# Fertigungsfreigabe bis
+DTM_13b_2380
+        ? ( DTM_13b_2380 != "" & key_tmp = "52" )
+        : E2EDP10_ABFDE ;
+
+# Drawing revision number
+model_year
+        : E2EDP10_DESRE ;
+
+# Werk Kunde
+we_nummer
+        : E2EDP10_KWERK ;
+
+# Abladestelle
+LOC_02_3225
+        { we_ablad = LOC_02_3225 }
+        ? ( LOC_02_3225 >= "" & key_tmp = "11" )
+        : ;
+
+we_ablad
+        : E2EDP10_DFABL ;
+
+# Verbrauchsstelle
+LOC_02_3225
+        ? ( LOC_02_3225 >= "" & key_tmp = "159" )
+        : E2EDP10_VBRST ;
+
+# Letzte gelieferte Menge, Lieferschein, Lieferdatum
+QTY_01_6060
+        ? ( QTY_01_6060 >= "" & key_tmp = "194" )
+        : E2EDP10_LFIMG ;
+
+RFF_05_1154
+        ? ( RFF_05_1154 >= "" & key_tmp IN ["AAU"] )
+        : E2EDP10_BELNR ;
+ 
+SUBSTR ( DTM_12_2380, 0, 8 )
+        ? ( DTM_12_2380 >= "" & key_tmp IN ["AAU-171","AAU-242"] )
+        : E2EDP10_LIDTL ;
+
+
+#---------------------------------------------------------------------------------------------------------------#
+#        E2EDP14 Packmittel, Fuellmenge                                                                         #
+#---------------------------------------------------------------------------------------------------------------#
+MANDT
+        : E2EDP14_MANDT ;
+
+PAC_7065
+        : E2EDP14_PCKNR ;
+
+QTY_03_6060
+        ? ( QTY_03_6060 != "" & key_tmp = "52" )
+        : E2EDP14_ANZAR ;
+
+TAB ( CONCAT ("EDI6411-E-", we_nummer, "-", QTY_03_6411 ), modifications )
+        : E2EDP14_MAZAR ;
+
+
+#---------------------------------------------------------------------------------------------------------------#
+#        E2EDP15                                                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+MANDT
+        : E2EDP15_MANDT ;
+
+"ZEDI"
+        : E2EDP15_TDNAME ;
+
+FTX_03_4440_01
+        : E2EDP15_TXT01 ;
+
+FTX_03_4440_02
+        : E2EDP15_TXT02 ;
+
+FTX_03_4440_03
+        : E2EDP15_TXT03 ;
+
+FTX_03_4440_04
+        : E2EDP15_TXT04 ;
+
+FTX_03_4440_05
+        : E2EDP15_TXT05 ;
+
+
+#---------------------------------------------------------------------------------------------------------------#
+#        E2EDP16a Rueckstand                                                                                    #
+#---------------------------------------------------------------------------------------------------------------#
+MANDT
+        : E2EDP16a_MANDT ;
+
+# Rueckstand nach E2EDP16a
+# Rueckstaende werden bei GM nicht gesondert gekennzeichnet.
+# Es wird deshalb bei den Einteilungsterminen das Startdatum geprüft, liegt dieses vor dem Erstellungszeitpunkt
+# des Planes wird ETTYP = 2 (Rueckstand ) gesetzt. Eine gesonderte Abbildung ins Segment E2EDP16a findet hier
+# nicht statt.
+
+
+
+# Mengeneinheit
+# Bei GM Werksabhängig umsetzen damit später beim Senden der Lieferscheindfü wieder die vom Werk verwendete
+# Mengeneinheit gesendet werden kann. SAP intern wird nur eine Mengeneinheit verwendet.
+# GM sendet je nach Werk PCE, C62.
+QTY_01_6411
+        { vrkme = TAB ( CONCAT ( "EDI6411-E-", we_nummer, "-", QTY_01_6411 ), modifications ) }
+        ? ( QTY_01_6411 >= "" & key_tmp = "83" )
+        : ;
+
+QTY_01_6411
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Bitte Ersetzungstabelle '", modifications, "' pflegen !")
+          , PRINT ( "F*EDI6411-E-", we_nummer, "-", QTY_01_6411, "='SAP Mengeneinheit'" )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err), err = 1
+        }
+        ? ( TAB ( CONCAT ( "EDI6411-E-", we_nummer, "-", QTY_01_6411 ), modifications ) = "" & err = 0 & key_tmp ="83" )
+        : ;
+
+# Einteilungsmenge puffern ( Einteilung Abruf )
+QTY_01_6060
+	{prgrs = "D", ettyp = "2", edatuv = DAYSUB(docdate,1), edatub = DAYSUB(docdate,1)}
+	? ( QTY_01_6060 != "" & key_tmp = "83" )
+        : E2EDP16a_WMENG ;
+
+prgrs
+	? ( QTY_01_6060 != "" & key_tmp = "83" )
+        : E2EDP16a_PRGRS ;
+
+ettyp
+	? ( QTY_01_6060 != "" & key_tmp = "83" )
+        : E2EDP16a_ETTYP ;
+
+edatuv
+	? ( QTY_01_6060 != "" & key_tmp = "83" )
+        : E2EDP16a_EDATUV ;
+
+edatub
+	? ( QTY_01_6060 != "" & key_tmp = "83" )
+        : E2EDP16a_EDATUB ;
+
+# Einteilungstyp puffern
+# SCC+4017++2013
+# 4017:
+# 1 Firm
+# 4 Forecast
+#
+# 2013:
+# W Weekly
+# F Flexible Intervalle
+SCC_01_4017
+        { ettyp = SCC_01_4017 }
+        ? ( SCC_01_4017 >= "")
+        : ;
+
+SCC_01_2013
+        { frequenz = SCC_01_2013 }
+        ? ( SCC_01_2013 >= "" )
+        : ;
+
+SCC_01_2013
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Nicht spezifizierter Qualifier in Segment SCC Feld 2013.")
+          , PRINT ( "F*Mapping anpassen !")
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err)
+        }
+        ? ( ! SCC_01_2013 IN ["D","Y","W","F"] )
+        : ;
+
+# Einteilungsdatum
+# DTM_2005 =   2 --> Tagesdatum Anlieferung
+# DTM_2005 = 158 --> Beginn Periode
+# DTM_2005 = 159 --> Ende Periode
+
+# Ruecksetzen der Einteilungsvariablen edatub, edatuv, ezeit und prgrs erfolgt beim
+# lesen einer neuen QTY_02 Gruppe (Einteilung). Siehe Init-Bereich des Mappings.
+DTM_13_2380
+        { temp = DTM_13_2380 }
+        ? ( DTM_13_2380 >= "" )
+        : ;
+
+# Bei DTM+2:20021210:102'
+DTM_13_2379
+        {   edatuv = SUBSTR ( temp, 0, 8 )
+          , edatub = ( frequenz = "W" ? DAYADD (edatuv, 6) :
+                        ( frequenz = "F" ? DAYADD (edatuv, 27) : edatuv )
+                     )
+          , prgrs  = ( frequenz = "W" ? "W" : ( frequenz = "F" ? "I" : "D" ) )
+          , ezeit  = ( DTM_13_2379 = "102" ? "0000" : SUBSTR ( temp, 9, 4 ) )
+          , abrab  = ( ( edatuv < startdate | startdate = "00000000" ) ? edatuv : startdate )
+        }
+        ? ( DTM_13_2379 IN ["102","203"] & key_tmp = "2" )
+        : ;
+
+# Ticket 2015041374000105 - SES Shanghai sendet mit DTM+10
+# Bei DTM+10:20021210:102'
+DTM_13_2379
+        {   edatuv = SUBSTR ( temp, 0, 8 )
+          , edatub = ( frequenz = "W" ? DAYADD (edatuv, 6) :
+                        ( frequenz = "F" ? DAYADD (edatuv, 27) : edatuv )
+                     )
+          , prgrs  = ( frequenz = "W" ? "W" : ( frequenz = "F" ? "I" : "D" ) )
+          , ezeit  = ( DTM_13_2379 = "102" ? "0000" : SUBSTR ( temp, 9, 4 ) )
+          , abrab  = ( ( edatuv < startdate | startdate = "00000000" ) ? edatuv : startdate )
+        }
+        ? ( DTM_13_2379 IN ["102","203"] & key_tmp = "10" )
+        : ;
+
+
+# Bei DTM+158:20021210:102'
+DTM_13_2379
+        {   edatuv = SUBSTR ( DTM_13_2380, 0, 8 )
+          , edatub = ( edatub = "00000000" ? ( frequenz = "W" ? DAYADD (edatuv, 6) :
+                        ( frequenz = "F" ? DAYADD (edatuv, 27) : edatuv ) ) : edatub
+                     )
+          , prgrs  = ( frequenz = "W" ? "W" : ( frequenz = "F" ? "I" : "D" ) )
+          , ezeit  = ( DTM_13_2379 = "102" ? "0000" : SUBSTR ( temp, 9, 4 ) )
+          , abrab  = ( ( edatuv < startdate | startdate = "00000000" ) ? edatuv : startdate )
+        }
+        ? ( DTM_13_2379 IN ["102","203"] & key_tmp = "158" )
+        : ;
+
+# Bei DTM+159:20021210:102'
+DTM_13_2379
+        {   edatub = SUBSTR ( DTM_13_2380, 0, 8 )
+          , edatuv = ( edatuv = "00000000" ? ( frequenz = "W" ? DAYSUB (edatub, 6) :
+                        ( frequenz = "F" ? DAYSUB (edatub, 27) : edatub ) ) : edatuv
+                     )
+          , prgrs  = ( frequenz = "W" ? "W" : ( frequenz = "F" ? "I" : "D" ) )
+          , abrab  = ( ( edatuv < startdate | startdate = "00000000" ) ? edatuv : startdate )
+        }
+        ? ( DTM_13_2379 IN ["102","203"] & key_tmp = "159" )
+        : ;
+
+
+# Abbilden der Ermittelten Werte
+ezeit
+        : E2EDP16a_EZEIT ;
+
+
+# Einteilungsverteilfunktion
+etvtf
+        : E2EDP16_ETVTF ;
+
+
+
+
+#---------------------------------------------------------------------------------------------------------------#
+#        E2EDP16                                                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+MANDT
+        : E2EDP16_MANDT ;
+
+# Mengeneinheit
+# Bei GM Werksabhängig umsetzen damit später beim Senden der Lieferscheindfü wieder die vom Werk verwendete
+# Mengeneinheit gesendet werden kann. SAP intern wird nur eine Mengeneinheit verwendet.
+# GM sendet je nach Werk PCE, C62.
+QTY_02_6411
+        { vrkme = TAB ( CONCAT ( "EDI6411-E-", we_nummer, "-", QTY_02_6411 ), modifications ) }
+        ? ( QTY_02_6411 >= "" )
+        : ;
+
+QTY_02_6411
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Bitte Ersetzungstabelle '", modifications, "' pflegen !")
+          , PRINT ( "F*EDI6411-E-", we_nummer, "-", QTY_02_6411, "='SAP Mengeneinheit'" )
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err), err = 1
+        }
+        ? ( TAB ( CONCAT ( "EDI6411-E-", we_nummer, "-", QTY_02_6411 ), modifications ) = "" & err = 0 )
+        : ;
+
+# Einteilungsmenge puffern ( Einteilung Abruf )
+QTY_02_6060
+        : E2EDP16_WMENG ;
+
+# Einteilungstyp puffern
+# SCC+4017++2013
+# 4017:
+# 1 Firm
+# 4 Forecast
+#
+# 2013:
+# W Weekly
+# F Flexible Intervall
+
+SCC_01_4017
+        { ettyp = SCC_01_4017 }
+        ? ( SCC_01_4017 >= "")
+        : ;
+
+SCC_01_2013
+        { frequenz = SCC_01_2013 }
+        ? ( SCC_01_2013 >= "" )
+        : ;
+
+SCC_01_2013
+        {   PRINT ( "F*================================= F E H L E R ==================================")
+          , PRINT ( "F*Nicht spezifizierter Qualifier in Segment SCC Feld 2013.")
+          , PRINT ( "F*Mapping anpassen !")
+          , PRINT ( "F*================================================================================")
+          , INC (cnt_err)
+        }
+        ? ( ! SCC_01_2013 IN ["D","Y","W","F"] )
+        : ;
+
+# Einteilungsdatum
+# DTM_2005 =   2 --> Tagesdatum Anlieferung
+# DTM_2005 = 158 --> Beginn Periode
+# DTM_2005 = 159 --> Ende Periode
+
+# Ruecksetzen der Einteilungsvariablen edatub, edatuv, ezeit und prgrs erfolgt beim
+# lesen einer neuen QTY_02 Gruppe (Einteilung). Siehe Init-Bereich des Mappings.
+DTM_13_2380
+        { temp = DTM_13_2380 }
+        ? ( DTM_13_2380 >= "" )
+        : ;
+
+# Bei DTM+2:20021210:102'
+DTM_13_2379
+        {   edatuv = SUBSTR ( temp, 0, 8 )
+          , edatub = ( frequenz = "W" ? DAYADD (edatuv, 6) : 
+                        ( frequenz = "F" ? DAYADD (edatuv, 27) : edatuv )
+                     )
+          , prgrs  = ( frequenz = "W" ? "W" : ( frequenz = "F" ? "I" : "D" ) )
+          , ezeit  = ( DTM_13_2379 = "102" ? "0000" : SUBSTR ( temp, 9, 4 ) )
+          , abrab  = ( ( edatuv < startdate | startdate = "00000000" ) ? edatuv : startdate )
+        }
+        ? ( DTM_13_2379 IN ["102","203"] & key_tmp = "2" )
+        : ;
+
+# Ticket 2015041374000105 - SES Shanghai sendet mit DTM+10
+# Bei DTM+10:20021210:102'
+DTM_13_2379
+        {   edatuv = SUBSTR ( temp, 0, 8 )
+          , edatub = ( frequenz = "W" ? DAYADD (edatuv, 6) :
+                        ( frequenz = "F" ? DAYADD (edatuv, 27) : edatuv )
+                     )
+          , prgrs  = ( frequenz = "W" ? "W" : ( frequenz = "F" ? "I" : "D" ) )
+          , ezeit  = ( DTM_13_2379 = "102" ? "0000" : SUBSTR ( temp, 9, 4 ) )
+          , abrab  = ( ( edatuv < startdate | startdate = "00000000" ) ? edatuv : startdate )
+        }
+        ? ( DTM_13_2379 IN ["102","203"] & key_tmp = "10" )
+        : ;
+
+
+# Bei DTM+158:20021210:102'
+DTM_13_2379
+        {   edatuv = SUBSTR ( DTM_13_2380, 0, 8 )
+          , edatub = ( edatub = "00000000" ? ( frequenz = "W" ? DAYADD (edatuv, 6) : 
+                        ( frequenz = "F" ? DAYADD (edatuv, 27) : edatuv ) ) : edatub
+                     )
+          , prgrs  = ( frequenz = "W" ? "W" : ( frequenz = "F" ? "I" : "D" ) )
+          , ezeit  = ( DTM_13_2379 = "102" ? "0000" : SUBSTR ( temp, 9, 4 ) )
+          , abrab  = ( ( edatuv < startdate | startdate = "00000000" ) ? edatuv : startdate )
+        }
+        ? ( DTM_13_2379 IN ["102","203"] & key_tmp = "158" )
+        : ;
+
+# Bei DTM+159:20021210:102'
+DTM_13_2379
+        {   edatub = SUBSTR ( DTM_13_2380, 0, 8 )
+          , edatuv = ( edatuv = "00000000" ? ( frequenz = "W" ? DAYSUB (edatub, 6) : 
+                        ( frequenz = "F" ? DAYSUB (edatub, 27) : edatub ) ) : edatuv
+                     )
+          , prgrs  = ( frequenz = "W" ? "W" : ( frequenz = "F" ? "I" : "D" ) )
+          , abrab  = ( ( edatuv < startdate | startdate = "00000000" ) ? edatuv : startdate )
+        }
+        ? ( DTM_13_2379 IN ["102","203"] & key_tmp = "159" )
+        : ;
+
+
+# Abbilden der Ermittelten Werte
+prgrs
+        : E2EDP16_PRGRS ;
+
+( edatuv < docdate ? "2" : ettyp )
+        : E2EDP16_ETTYP ;
+
+edatuv
+        : E2EDP16_EDATUV ;
+
+edatub
+        : E2EDP16_EDATUB ;
+
+ezeit
+        : E2EDP16_EZEIT ;
+
+
+# Einteilungsverteilfunktion
+etvtf
+        : E2EDP16_ETVTF ;
+
+
+
+
+#---------------------------------------------------------------------------------------------------------------#
+#        FEHLERPRUEFUNG                                                                                         #
+#---------------------------------------------------------------------------------------------------------------#
+
+idUNZ
+        {   PRINT ( "F*================================= F E H L E R ==================================" )
+          , PRINT ( "F*WAEHREND DER KONVERTIERUNG SIND ", cnt_err, " FEHLER AUFGETRETEN !" )
+          , PRINT ( "F*DAS KONVERTIERUNGSPROGRAMM WIRD MIT EXITCODE 1 BEENDET" )
+          , PRINT ( "F*=================================== E N D E ====================================" )
+          , EXIT (1)
+        }
+        ? ( idUNZ >= "" & cnt_err > 0 )
+        : ;
+

@@ -1,0 +1,2200 @@
+#---------------------------------------------------------------------------------------------------------------#
+#                                      SAP-IDOC - DELFOR01 - SAP 4.6x                                           #
+#                                                                                                               #
+#                                                Axel Nefzer                                                    #
+#                     (c)2002 pmc Gesellschaft fuer Unternehmensberatung mbH, Heilbronn                         #
+#---------------------------------------------------------------------------------------------------------------#
+#!FGFLAGS=1
+#
+# BESCHREIBUNG:
+#
+# Formatbeschreibung fuer SAP DELFOR01 ( pmcConnect Erweiterungstyp CONN0001 )
+#
+#
+# SAP-SEGMENTVERSION:
+#
+# E2EDK09003, Z274K09000, E2EDK10   , E2EDKA1003, E2EDK11001, E2EDP10001, E2EDP11   , E2EDP14   , E2EDP15001,
+# E2EDP16
+#
+#
+# AENDERUNGEN:
+#
+# AN 2002.09.30
+# Split Segment E2EDKA1 über Qualifier LF, AG, WE, AP, AB, RE, OMI, OSF, OPB, OSU, X (Rest)
+#
+# AN 2002.12.10
+# - E2EDP16a hinzugefuegt, wird wenn benutzt, immer vor den Standard E2EDP16 Segmenten erscheinen.
+#   Wird benoetigt, wenn Gruppen die auserhalb einer nonterminalen Zuordnung sind ebenfalls E2EDP16 Segmente
+#   erzeugen sollen ( zB.: Sonderbehandlung fuer Rueckstandsmengen ).
+# - Segment E2EDP16 ueber Gruppe GP16: Erzwingt die Abbildung der Variablen ins Segment E2EDP16 bei Schliessung
+#   der Gruppe GP16 --> Nonterminale Abbildung auf GP16 !
+#
+# AN 2004.01.13
+# - E2EDK11 * 9999   -->  GP11 * 9999  -  E2EDK11 +1
+#   E2EDK11 Segment in Gruppe K11 eingeordnet. Segment darf dort nur einmal vorkommen, die Gruppe K11 kann
+#   wiederholt werden. Damit ist das schliessen und Abbilden der Werte in die Felder des Segmentes beim
+#   initialiseren eines neuen Segmentes gewaehrleistet.
+#
+#---------------------------------------------------------------------------------------------------------------#
+#       FILE                                                                                                    #
+#---------------------------------------------------------------------------------------------------------------#
+
+FILE.
+
+FILE    :
+        SAPIDOC         [0:"EDI_DC40"]       + 9999
+        ;
+
+SAPIDOC :
+        EDI_DC40        [0:"EDI_DC40"]       +    1
+        G1              [0:"E2EDK09"]        +    1
+        ;
+
+G1      :
+        E2EDK09         [0:"E2EDK09"]        +    1
+        Z274K09         [0:"Z274K09"]        *    1
+        E2EDK10         [0:"E2EDK10"]        *    1
+        E2EDKA1x        [0:"E2EDKA1"]        +   10
+        GP11            [0:"E2EDK11"]        * 9999
+        GP11_DR         [0:"XXXXXXX"]        * 9999
+        GP11_LF         [0:"XXXXXXX"]        * 9999
+        G2              [0:"E2EDP10"]        + 9999
+        ;
+
+
+G2      :
+        E2EDP10         [0:"E2EDP10"]        + 9999
+        E2EDP11         [0:"E2EDP11"]        * 9999
+        GP14            [0:"E2EDP14"]        * 9999 
+        E2EDP15         [0:"E2EDP15"]        * 9999
+        E2EDP16a        [0:"XXXXXXX"]        *   20
+        GP16            [0:"E2EDP16"]        * 9999
+        ;
+
+GP16    :
+        E2EDP16         [0:"E2EDP16"]        +    1
+        ;
+
+GP14    :
+        E2EDP14         [0:"E2EDP14"]        +    1
+        ;
+
+GP11    :
+        E2EDK11         [0:"E2EDK11"]        +    1
+        ;
+
+GP11_DR :
+        E2EDK11_DR      [0:"E2EDK11"]        +    1
+        ;
+
+GP11_LF :
+        E2EDK11_LF      [0:"E2EDK11"]        +    1
+        ;
+
+E2EDKA1x:
+        E2EDKA1_LF      [? (KEY_EXISTS(0,"E2EDKA1") != 0 & KEY_EXISTS(63,"LF ")  != 0)]  |
+        E2EDKA1_AG      [? (KEY_EXISTS(0,"E2EDKA1") != 0 & KEY_EXISTS(63,"AG ")  != 0)]  |
+        E2EDKA1_AP      [? (KEY_EXISTS(0,"E2EDKA1") != 0 & KEY_EXISTS(63,"AP ")  != 0)]  |
+        E2EDKA1_WE      [? (KEY_EXISTS(0,"E2EDKA1") != 0 & KEY_EXISTS(63,"WE ")  != 0)]  |
+        E2EDKA1_RE      [? (KEY_EXISTS(0,"E2EDKA1") != 0 & KEY_EXISTS(63,"RE ")  != 0)]  |
+        E2EDKA1_AB      [? (KEY_EXISTS(0,"E2EDKA1") != 0 & KEY_EXISTS(63,"AB ")  != 0)]  |
+        E2EDKA1_OB      [? (KEY_EXISTS(0,"E2EDKA1") != 0 & KEY_EXISTS(63,"OB ")  != 0)]  |
+        E2EDKA1_OMI     [? (KEY_EXISTS(0,"E2EDKA1") != 0 & KEY_EXISTS(63,"OMI") != 0)]  |
+        E2EDKA1_OSF     [? (KEY_EXISTS(0,"E2EDKA1") != 0 & KEY_EXISTS(63,"OSF") != 0)]  |
+        E2EDKA1_OPB     [? (KEY_EXISTS(0,"E2EDKA1") != 0 & KEY_EXISTS(63,"OPB") != 0)]  |
+        E2EDKA1_OSU     [? (KEY_EXISTS(0,"E2EDKA1") != 0 & KEY_EXISTS(63,"OSU") != 0)]  |
+        E2EDKA1         [? (KEY_EXISTS(0,"E2EDKA1") != 0
+                           & KEY_EXISTS(63,"LF")     = 0
+                           & KEY_EXISTS(63,"AG")     = 0
+                           & KEY_EXISTS(63,"AP")     = 0
+                           & KEY_EXISTS(63,"WE")     = 0
+                           & KEY_EXISTS(63,"RE")     = 0
+                           & KEY_EXISTS(63,"AB")     = 0
+                           & KEY_EXISTS(63,"OMI")    = 0
+                           & KEY_EXISTS(63,"OSF")    = 0
+                           & KEY_EXISTS(63,"OPB")    = 0
+                           & KEY_EXISTS(63,"OSU")    = 0 )
+                        ]
+        ;
+
+#---------------------------------------------------------------------------------------------------------------#
+#       EDI_DC40                                                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+
+EDI_DC40  { DELIMITER = "\x0a" }:
+          EDI_DC40_TABNAM               # NAME DER TABELLENSTRUKTUR
+          EDI_DC40_MANDT                # MANDANT
+          EDI_DC40_DOCNUM               # NUMMER DES IDOCS
+          EDI_DC40_DOCREL               # SAP-RELEASE DES IDOCS
+          EDI_DC40_STATUS               # STATUS DES IDOCS
+          EDI_DC40_DIRECT               # RICHTUNG
+          EDI_DC40_OUTMOD               # AUSGABEMODUS
+          EDI_DC40_EXPRSS               # UEBERSTEUERUNG IM EINGANG
+          EDI_DC40_TEST                 # TESTKENNZEICHEN
+          EDI_DC40_IDOCTYP              # NAME DES BASISTYPS
+          EDI_DC40_CIMTYP               # ERWEITERUNG (VOM KUNDEN DEFINIERT)
+          EDI_DC40_MESTYP               # NACHRICHTENTYP
+          EDI_DC40_MESCOD               # NACHRICHTENVARIANTE
+          EDI_DC40_MESFCT               # NACHRICHTENFUNKTION
+          EDI_DC40_STD                  # EDI-STANDARD, KENNZEICHEN
+          EDI_DC40_STDVRS               # EDI-STANDARD, VERSION UND RELEASE
+          EDI_DC40_STDMES               # EDI-NACHRICHTENTYP
+          EDI_DC40_SNDPOR               # ABSENDERPORT (SAP-SYSTEM, EXTERNES SUBSYSTEM)
+          EDI_DC40_SNDPRT               # PARTNERART DES ABSENDERS
+          EDI_DC40_SNDPFC               # PARTNERROLLE DES ABSENDERS
+          EDI_DC40_SNDPRN               # PARTNERNUMMER DES ABSENDERS
+          EDI_DC40_SNDSAD               # ABSENDERADRESSE (SADR)
+          EDI_DC40_SNDLAD               # LOGISCHE ADRESSE DES ABSENDERS
+          EDI_DC40_RCVPOR               # EMPFAENGERPORT
+          EDI_DC40_RCVPRT               # PARTNERART DES EMPFAENGERS
+          EDI_DC40_RCVPFC               # PARTNERROLLE DES EMPFAENGERS
+          EDI_DC40_RCVPRN               # PARTNERNUMMER DES EMPFAENGERS
+          EDI_DC40_RCVSAD               # EMPFAENGERADRESSE (SADR)
+          EDI_DC40_RCVLAD               # LOGISCHE ADRESSE DES EMPFAENGERS
+          EDI_DC40_CREDAT               # ERSTELLUNGSDATUM
+          EDI_DC40_CRETIM               # ERSTELLUNGSUHRZEIT
+          EDI_DC40_REFINT               # UEBERTRAGUNGSDATEI (EDI INTERCHANGE)
+          EDI_DC40_REFGRP               # NACHRICHTENGRUPPE (EDI MESSAGE GROUP)
+          EDI_DC40_REFMES               # NACHRICHT (EDI MESSAGE)
+          EDI_DC40_ARCKEY               # SCHLUESSEL DES EXTERNEN NACHRICHTENARCHIVS
+          EDI_DC40_SERIAL               # SERIALISIERUNG
+          REST      *;
+
+EDI_DC40_TABNAM               :  STRINGA { LENGTH   =  10, DEFAULT = "EDI_DC40  " };
+EDI_DC40_MANDT                :  STRINGA { LENGTH   =   3 };
+EDI_DC40_DOCNUM               :  STRINGA { LENGTH   =  16 };
+EDI_DC40_DOCREL               :  STRINGA { LENGTH   =   4 };
+EDI_DC40_STATUS               :  STRINGA { LENGTH   =   2 };
+EDI_DC40_DIRECT               :  STRINGA { LENGTH   =   1 };
+EDI_DC40_OUTMOD               :  STRINGA { LENGTH   =   1 };
+EDI_DC40_EXPRSS               :  STRINGA { LENGTH   =   1 };
+EDI_DC40_TEST                 :  STRINGA { LENGTH   =   1 };
+EDI_DC40_IDOCTYP              :  STRINGA { LENGTH   =  30 };
+EDI_DC40_CIMTYP               :  STRINGA { LENGTH   =  30 };
+EDI_DC40_MESTYP               :  STRINGA { LENGTH   =  30 };
+EDI_DC40_MESCOD               :  STRINGA { LENGTH   =   3 };
+EDI_DC40_MESFCT               :  STRINGA { LENGTH   =   3 };
+EDI_DC40_STD                  :  STRINGA { LENGTH   =   1 };
+EDI_DC40_STDVRS               :  STRINGA { LENGTH   =   6 };
+EDI_DC40_STDMES               :  STRINGA { LENGTH   =   6 };
+EDI_DC40_SNDPOR               :  STRINGA { LENGTH   =  10 };
+EDI_DC40_SNDPRT               :  STRINGA { LENGTH   =   2 };
+EDI_DC40_SNDPFC               :  STRINGA { LENGTH   =   2 };
+EDI_DC40_SNDPRN               :  STRINGA { LENGTH   =  10 };
+EDI_DC40_SNDSAD               :  STRINGA { LENGTH   =  21 };
+EDI_DC40_SNDLAD               :  STRINGA { LENGTH   =  70 };
+EDI_DC40_RCVPOR               :  STRINGA { LENGTH   =  10 };
+EDI_DC40_RCVPRT               :  STRINGA { LENGTH   =   2 };
+EDI_DC40_RCVPFC               :  STRINGA { LENGTH   =   2 };
+EDI_DC40_RCVPRN               :  STRINGA { LENGTH   =  10 };
+EDI_DC40_RCVSAD               :  STRINGA { LENGTH   =  21 };
+EDI_DC40_RCVLAD               :  STRINGA { LENGTH   =  70 };
+EDI_DC40_CREDAT               :  STRINGA { LENGTH   =   8, PICTURE="YYYYMMDD" };
+EDI_DC40_CRETIM               :  STRINGA { LENGTH   =   6, PICTURE="HHNNSS" };
+EDI_DC40_REFINT               :  STRINGA { LENGTH   =  14 };
+EDI_DC40_REFGRP               :  STRINGA { LENGTH   =  14 };
+EDI_DC40_REFMES               :  STRINGA { LENGTH   =  14 };
+EDI_DC40_ARCKEY               :  STRINGA { LENGTH   =  70 };
+EDI_DC40_SERIAL               :  STRINGA { LENGTH   =  20 };
+
+#---------------------------------------------------------------------------------------------------------------#
+#       REST                                                                                                    #
+#---------------------------------------------------------------------------------------------------------------#
+
+REST                         :  STRINGA  { MAXLENGTH= 250 };
+
+#---------------------------------------------------------------------------------------------------------------#
+#       E2EDK09003                                                                                              #
+#---------------------------------------------------------------------------------------------------------------#
+
+E2EDK09 { DELIMITER = "\x0a" }:
+        E2EDK09_SEGNAM                  # Segment (externer Name)
+        E2EDK09_SEGNAM2                 # Segment (Version)
+        E2EDK09_SEGNAM3
+        E2EDK09_MANDT                   # Mandant
+        E2EDK09_DOCNUM                  # Nummer des IDocs
+        E2EDK09_SEGNUM                  # Segmentnummer
+        E2EDK09_PSGNUM                  # Nummer des übergeordneten Elternsegments
+        E2EDK09_HLEVEL                  # Hierarchieebene des SAP-Segmentes
+        E2EDK09_VTRNR                   # Vertragsnummer (Kontraktnummer)
+        E2EDK09_BSTDK                   # Bestelldatum des Kunden
+        E2EDK09_LABNK                   # Lieferabruf-/Feinabrufnummer des Kunden
+        E2EDK09_ZEICH                   # Zeichen des Bestellers
+        E2EDK09_BSTZD                   # Kontierung
+        E2EDK09_ABRVW                   # Verwendungskennzeichen
+        E2EDK09_KSTAT                   # Konverter-Status
+        E2EDK09_KTEXT                   # Fehlertext aus Konverter
+        E2EDK09_ABNRA                   # Lieferabruf-/Feinabrufnummer des Kunden
+        E2EDK09_ABNRD                   # Datum des Abrufs
+        E2EDK09_KTEXT_V                 # Suchbegriff Sortiment
+        E2EDK09_USR01                   # Kundenreserve: Zusatzdatenfeld 1 für Abrufe
+        E2EDK09_USR02                   # Kundenreserve: Zusatzdatenfeld 2 für Abrufe
+        E2EDK09_USR03                   # Kundenreserve: Zusatzdatenfeld 3 für Abrufe
+        E2EDK09_USR04                   # Kundenreserve: Zusatzdatenfeld 4 für Abrufe
+        E2EDK09_USR05                   # Kundenreserve: Zusatzdatenfeld 5 für Abrufe
+        E2EDK09_CYEFZ                   # zum Datum der Nullstellung erreichte Fortschrittszahl
+        E2EDK09_CYDAT                   # Datum der Nullstellung der Eingangsfortschrittszahl
+        E2EDK09_MFLAUF                  # Freigabe-Laufzeit
+        E2EDK09_MFEIN                   # Freigabelaufzeit - Einheit
+        E2EDK09_FFLAUF                  # Freigabe-Laufzeit
+        E2EDK09_FFEIN                   # Freigabelaufzeit - Einheit
+        REST    *
+        ;
+
+E2EDK09_SEGNAM  :  STRINGA { LENGTH =  7, DEFAULT = "E2EDK09" }; 
+E2EDK09_SEGNAM2 :  STRINGA { LENGTH =  3, DEFAULT = "003" };
+E2EDK09_SEGNAM3 :  STRINGA { LENGTH = 20 };
+E2EDK09_MANDT   :  STRINGA { LENGTH =  3 };
+E2EDK09_DOCNUM  :  STRINGA { LENGTH = 16 };
+E2EDK09_SEGNUM  :  STRINGA { LENGTH =  6 };
+E2EDK09_PSGNUM  :  STRINGA { LENGTH =  6 };
+E2EDK09_HLEVEL  :  STRINGA { LENGTH =  2 };
+E2EDK09_VTRNR   :  STRINGA { LENGTH = 35 };
+E2EDK09_BSTDK   :  STRINGA { LENGTH =  8, PICTURE = "YYYYMMDD", DEFAULT = "        " };
+E2EDK09_LABNK   :  STRINGA { LENGTH = 17 };
+E2EDK09_ZEICH   :  STRINGA { LENGTH = 70 };
+E2EDK09_BSTZD   :  STRINGA { LENGTH = 70 };
+E2EDK09_ABRVW   :  STRINGA { LENGTH =  3 };
+E2EDK09_KSTAT   :  STRINGA { LENGTH =  2 };
+E2EDK09_KTEXT   :  STRINGA { LENGTH = 70 };
+E2EDK09_ABNRA   :  STRINGA { LENGTH = 17 };
+E2EDK09_ABNRD   :  STRINGA { LENGTH =  8, PICTURE = "YYYYMMDD", DEFAULT = "        " };
+E2EDK09_KTEXT_V :  STRINGA { LENGTH = 40 };
+E2EDK09_USR01   :  STRINGA { LENGTH = 35 };
+E2EDK09_USR02   :  STRINGA { LENGTH = 35 };
+E2EDK09_USR03   :  STRINGA { LENGTH = 35 };
+E2EDK09_USR04   :  STRINGA { LENGTH = 10 };
+E2EDK09_USR05   :  STRINGA { LENGTH = 10 };
+E2EDK09_CYEFZ   :  STRINGA { LENGTH = 15 };
+E2EDK09_CYDAT   :  STRINGA { LENGTH =  8, PICTURE = "YYYYMMDD", DEFAULT = "        " };
+E2EDK09_MFLAUF  :  STRINGA { LENGTH =  3 };
+E2EDK09_MFEIN   :  STRINGA { LENGTH =  1 };
+E2EDK09_FFLAUF  :  STRINGA { LENGTH =  3 };
+E2EDK09_FFEIN   :  STRINGA { LENGTH =  1 };
+
+#---------------------------------------------------------------------------------------------------------------#
+#       E2EDK10000                                                                                              #
+#---------------------------------------------------------------------------------------------------------------#
+
+E2EDK10 { DELIMITER = "\x0a" }:
+        E2EDK10_SEGNAM                  # Segment (externer Name)
+        E2EDK10_SEGNAM2                 # Segment (externer Name)
+        E2EDK10_SEGNAM3                 # Segment (externer Name)
+        E2EDK10_MANDT                   # Mandant
+        E2EDK10_DOCNUM                  # Nummer des IDocs
+        E2EDK10_SEGNUM                  # Segmentnummer
+        E2EDK10_PSGNUM                  # Nummer des übergeordneten Elternsegments
+        E2EDK10_HLEVEL                  # Hierarchieebene des SAP-Segmentes
+        E2EDK10_DUMMY                   # Dummyfunktion in der Laenge 1
+        REST*;
+
+E2EDK10_SEGNAM  :  STRINGA { LENGTH =  7, DEFAULT = "E2EDK10" };
+E2EDK10_SEGNAM2 :  STRINGA { LENGTH =  3 };
+E2EDK10_SEGNAM3 :  STRINGA { LENGTH = 20 };
+E2EDK10_MANDT   :  STRINGA { LENGTH =  3 };
+E2EDK10_DOCNUM  :  STRINGA { LENGTH = 16 };
+E2EDK10_SEGNUM  :  STRINGA { LENGTH =  6 };
+E2EDK10_PSGNUM  :  STRINGA { LENGTH =  6 };
+E2EDK10_HLEVEL  :  STRINGA { LENGTH =  2 };
+E2EDK10_DUMMY   :  STRINGA { LENGTH =  1 };
+
+#---------------------------------------------------------------------------------------------------------------#
+#       E2EDK11001                                                                                              #
+#---------------------------------------------------------------------------------------------------------------#
+
+E2EDK11 { DELIMITER = "\x0a" }:
+        E2EDK11_SEGNAM                  # Segment (externer Name)
+        E2EDK11_SEGNAM2                 # Segment (externer Name)
+        E2EDK11_SEGNAM3                 # Segment (externer Name)
+        E2EDK11_MANDT                   # Mandant
+        E2EDK11_DOCNUM                  # Nummer des IDocs
+        E2EDK11_SEGNUM                  # Segmentnummer
+        E2EDK11_PSGNUM                  # Nummer des übergeordneten Elternsegments
+        E2EDK11_HLEVEL                  # Hierarchieebene des SAP-Segmentes
+        E2EDK11_TDNAME                  # Textrolle EDI
+        E2EDK11_SPRAS                   # Sprachenschluessel
+        E2EDK11_TXTLF                   # Fortsetzungstext (laufende Nummer)
+        E2EDK11_TXT01                   # Textzeile fortlaufend
+        E2EDK11_TXT02                   # Textzeile fortlaufend
+        E2EDK11_TXT03                   # Textzeile fortlaufend
+        E2EDK11_TXT04                   # Textzeile fortlaufend
+        E2EDK11_TXT05                   # Textzeile fortlaufend
+        E2EDK11_TXT06                   # Textzeile fortlaufend
+        E2EDK11_TXT07                   # Textzeile fortlaufend
+        E2EDK11_TXT08                   # Textzeile fortlaufend
+        E2EDK11_TXT09                   # Textzeile fortlaufend
+        E2EDK11_TXT10                   # Textzeile fortlaufend
+        E2EDK11_TXT11                   # Textzeile fortlaufend
+        E2EDK11_TXT12                   # Textzeile fortlaufend
+        E2EDK11_TXT13                   # Textzeile fortlaufend
+        E2EDK11_TXT14                   # Textzeile fortlaufend
+        E2EDK11_TSSPRAS_ISO             # Sprache nach ISO 639
+        REST*
+        ;
+
+E2EDK11_SEGNAM     :  STRINGA { LENGTH =  7, DEFAULT = "E2EDK11" };
+E2EDK11_SEGNAM2    :  STRINGA { LENGTH =  3, DEFAULT = "001" };
+E2EDK11_SEGNAM3    :  STRINGA { LENGTH = 20 };
+E2EDK11_MANDT      :  STRINGA { LENGTH =  3 };
+E2EDK11_DOCNUM     :  STRINGA { LENGTH = 16 };
+E2EDK11_SEGNUM     :  STRINGA { LENGTH =  6 };
+E2EDK11_PSGNUM     :  STRINGA { LENGTH =  6 };
+E2EDK11_HLEVEL     :  STRINGA { LENGTH =  2 };
+E2EDK11_TDNAME     :  STRINGA { LENGTH =  4 };
+E2EDK11_SPRAS      :  STRINGA { LENGTH =  3 };
+E2EDK11_TXTLF      :  STRINGA { LENGTH =  2 };
+E2EDK11_TXT01      :  STRINGA { LENGTH = 70 };
+E2EDK11_TXT02      :  STRINGA { LENGTH = 70 };
+E2EDK11_TXT03      :  STRINGA { LENGTH = 70 };
+E2EDK11_TXT04      :  STRINGA { LENGTH = 70 };
+E2EDK11_TXT05      :  STRINGA { LENGTH = 70 };
+E2EDK11_TXT06      :  STRINGA { LENGTH = 70 };
+E2EDK11_TXT07      :  STRINGA { LENGTH = 70 };
+E2EDK11_TXT08      :  STRINGA { LENGTH = 70 };
+E2EDK11_TXT09      :  STRINGA { LENGTH = 70 };
+E2EDK11_TXT10      :  STRINGA { LENGTH = 70 };
+E2EDK11_TXT11      :  STRINGA { LENGTH = 70 };
+E2EDK11_TXT12      :  STRINGA { LENGTH = 70 };
+E2EDK11_TXT13      :  STRINGA { LENGTH = 70 };
+E2EDK11_TXT14      :  STRINGA { LENGTH = 70 };
+E2EDK11_TSSPRAS_ISO:  STRINGA { LENGTH =  2 };
+
+#---------------------------------------------------------------------------------------------------------------#
+#       E2EDK11001  DR                                                                                          #
+#---------------------------------------------------------------------------------------------------------------#
+
+E2EDK11_DR { DELIMITER = "\x0a" }:
+        E2EDK11_DR_SEGNAM               # Segment (externer Name)
+        E2EDK11_DR_SEGNAM2              # Segment (externer Name)
+        E2EDK11_DR_SEGNAM3              # Segment (externer Name)
+        E2EDK11_DR_MANDT                # Mandant
+        E2EDK11_DR_DOCNUM               # Nummer des IDocs
+        E2EDK11_DR_SEGNUM               # Segmentnummer
+        E2EDK11_DR_PSGNUM               # Nummer des übergeordneten Elternsegments
+        E2EDK11_DR_HLEVEL               # Hierarchieebene des SAP-Segmentes
+        E2EDK11_DR_TDNAME               # Textrolle EDI
+        E2EDK11_DR_SPRAS                # Sprachenschluessel
+        E2EDK11_DR_TXTLF                # Fortsetzungstext (laufende Nummer)
+        E2EDK11_DR_TXT01                # Textzeile fortlaufend
+        E2EDK11_DR_TXT02                # Textzeile fortlaufend
+        E2EDK11_DR_TXT03                # Textzeile fortlaufend
+        E2EDK11_DR_TXT04                # Textzeile fortlaufend
+        E2EDK11_DR_TXT05                # Textzeile fortlaufend
+        E2EDK11_DR_TXT06                # Textzeile fortlaufend
+        E2EDK11_DR_TXT07                # Textzeile fortlaufend
+        E2EDK11_DR_TXT08                # Textzeile fortlaufend
+        E2EDK11_DR_TXT09                # Textzeile fortlaufend
+        E2EDK11_DR_TXT10                # Textzeile fortlaufend
+        E2EDK11_DR_TXT11                # Textzeile fortlaufend
+        E2EDK11_DR_TXT12                # Textzeile fortlaufend
+        E2EDK11_DR_TXT13                # Textzeile fortlaufend
+        E2EDK11_DR_TXT14                # Textzeile fortlaufend
+        E2EDK11_DR_TSSPRAS_ISO          # Sprache nach ISO 639
+        REST*
+        ;
+
+E2EDK11_DR_SEGNAM     :  STRINGA { LENGTH =  7, DEFAULT = "E2EDK11" };
+E2EDK11_DR_SEGNAM2    :  STRINGA { LENGTH =  3, DEFAULT = "001" };
+E2EDK11_DR_SEGNAM3    :  STRINGA { LENGTH = 20 };
+E2EDK11_DR_MANDT      :  STRINGA { LENGTH =  3 };
+E2EDK11_DR_DOCNUM     :  STRINGA { LENGTH = 16 };
+E2EDK11_DR_SEGNUM     :  STRINGA { LENGTH =  6 };
+E2EDK11_DR_PSGNUM     :  STRINGA { LENGTH =  6 };
+E2EDK11_DR_HLEVEL     :  STRINGA { LENGTH =  2 };
+E2EDK11_DR_TDNAME     :  STRINGA { LENGTH =  4 };
+E2EDK11_DR_SPRAS      :  STRINGA { LENGTH =  3 };
+E2EDK11_DR_TXTLF      :  STRINGA { LENGTH =  2 };
+E2EDK11_DR_TXT01      :  STRINGA { LENGTH = 70 };
+E2EDK11_DR_TXT02      :  STRINGA { LENGTH = 70 };
+E2EDK11_DR_TXT03      :  STRINGA { LENGTH = 70 };
+E2EDK11_DR_TXT04      :  STRINGA { LENGTH = 70 };
+E2EDK11_DR_TXT05      :  STRINGA { LENGTH = 70 };
+E2EDK11_DR_TXT06      :  STRINGA { LENGTH = 70 };
+E2EDK11_DR_TXT07      :  STRINGA { LENGTH = 70 };
+E2EDK11_DR_TXT08      :  STRINGA { LENGTH = 70 };
+E2EDK11_DR_TXT09      :  STRINGA { LENGTH = 70 };
+E2EDK11_DR_TXT10      :  STRINGA { LENGTH = 70 };
+E2EDK11_DR_TXT11      :  STRINGA { LENGTH = 70 };
+E2EDK11_DR_TXT12      :  STRINGA { LENGTH = 70 };
+E2EDK11_DR_TXT13      :  STRINGA { LENGTH = 70 };
+E2EDK11_DR_TXT14      :  STRINGA { LENGTH = 70 };
+E2EDK11_DR_TSSPRAS_ISO:  STRINGA { LENGTH =  2 };
+
+#---------------------------------------------------------------------------------------------------------------#
+#       E2EDK11001  LF -> Letzte Lieferungen                                                                    #
+#---------------------------------------------------------------------------------------------------------------#
+
+E2EDK11_LF { DELIMITER = "\x0a" }:
+        E2EDK11_LF_SEGNAM               # Segment (externer Name)
+        E2EDK11_LF_SEGNAM2              # Segment (externer Name)
+        E2EDK11_LF_SEGNAM3              # Segment (externer Name)
+        E2EDK11_LF_MANDT                # Mandant
+        E2EDK11_LF_DOCNUM               # Nummer des IDocs
+        E2EDK11_LF_SEGNUM               # Segmentnummer
+        E2EDK11_LF_PSGNUM               # Nummer des übergeordneten Elternsegments
+        E2EDK11_LF_HLEVEL               # Hierarchieebene des SAP-Segmentes
+        E2EDK11_LF_TDNAME               # Textrolle EDI
+        E2EDK11_LF_SPRAS                # Sprachenschluessel
+        E2EDK11_LF_TXTLF                # Fortsetzungstext (laufende Nummer)
+        E2EDK11_LF_TXT01                # Textzeile fortlaufend
+        E2EDK11_LF_TXT02                # Textzeile fortlaufend
+        E2EDK11_LF_TXT03                # Textzeile fortlaufend
+        E2EDK11_LF_TXT04                # Textzeile fortlaufend
+        E2EDK11_LF_TXT05                # Textzeile fortlaufend
+        E2EDK11_LF_TXT06                # Textzeile fortlaufend
+        E2EDK11_LF_TXT07                # Textzeile fortlaufend
+        E2EDK11_LF_TXT08                # Textzeile fortlaufend
+        E2EDK11_LF_TXT09                # Textzeile fortlaufend
+        E2EDK11_LF_TXT10                # Textzeile fortlaufend
+        E2EDK11_LF_TXT11                # Textzeile fortlaufend
+        E2EDK11_LF_TXT12                # Textzeile fortlaufend
+        E2EDK11_LF_TXT13                # Textzeile fortlaufend
+        E2EDK11_LF_TXT14                # Textzeile fortlaufend
+        E2EDK11_LF_TSSPRAS_ISO          # Sprache nach ISO 639
+        REST*
+        ;
+
+E2EDK11_LF_SEGNAM     :  STRINGA { LENGTH =  7, DEFAULT = "E2EDK11" };
+E2EDK11_LF_SEGNAM2    :  STRINGA { LENGTH =  3, DEFAULT = "001" };
+E2EDK11_LF_SEGNAM3    :  STRINGA { LENGTH = 20 };
+E2EDK11_LF_MANDT      :  STRINGA { LENGTH =  3 };
+E2EDK11_LF_DOCNUM     :  STRINGA { LENGTH = 16 };
+E2EDK11_LF_SEGNUM     :  STRINGA { LENGTH =  6 };
+E2EDK11_LF_PSGNUM     :  STRINGA { LENGTH =  6 };
+E2EDK11_LF_HLEVEL     :  STRINGA { LENGTH =  2 };
+E2EDK11_LF_TDNAME     :  STRINGA { LENGTH =  4 };
+E2EDK11_LF_SPRAS      :  STRINGA { LENGTH =  3 };
+E2EDK11_LF_TXTLF      :  STRINGA { LENGTH =  2 };
+E2EDK11_LF_TXT01      :  STRINGA { LENGTH = 70 };
+E2EDK11_LF_TXT02      :  STRINGA { LENGTH = 70 };
+E2EDK11_LF_TXT03      :  STRINGA { LENGTH = 70 };
+E2EDK11_LF_TXT04      :  STRINGA { LENGTH = 70 };
+E2EDK11_LF_TXT05      :  STRINGA { LENGTH = 70 };
+E2EDK11_LF_TXT06      :  STRINGA { LENGTH = 70 };
+E2EDK11_LF_TXT07      :  STRINGA { LENGTH = 70 };
+E2EDK11_LF_TXT08      :  STRINGA { LENGTH = 70 };
+E2EDK11_LF_TXT09      :  STRINGA { LENGTH = 70 };
+E2EDK11_LF_TXT10      :  STRINGA { LENGTH = 70 };
+E2EDK11_LF_TXT11      :  STRINGA { LENGTH = 70 };
+E2EDK11_LF_TXT12      :  STRINGA { LENGTH = 70 };
+E2EDK11_LF_TXT13      :  STRINGA { LENGTH = 70 };
+E2EDK11_LF_TXT14      :  STRINGA { LENGTH = 70 };
+E2EDK11_LF_TSSPRAS_ISO:  STRINGA { LENGTH =  2 };
+
+#---------------------------------------------------------------------------------------------------------------#
+#       E2EDKA1003                                                                                              #
+#---------------------------------------------------------------------------------------------------------------#
+
+E2EDKA1 { DELIMITER = "\x0a" }:
+        E2EDKA1_SEGNAM                  # Segment (externer Name)
+        E2EDKA1_SEGNAM2                 # Segment (externer Name)
+        E2EDKA1_SEGNAM3                 # Segment (externer Name)
+        E2EDKA1_MANDT                   # Mandant
+        E2EDKA1_DOCNUM                  # Nummer des IDocs
+        E2EDKA1_SEGNUM                  # Segmentnummer
+        E2EDKA1_PSGNUM                  # Nummer des übergeordneten Elternsegments
+        E2EDKA1_HLEVEL                  # Hierarchieebene des SAP-Segmentes
+        E2EDKA1_PARVW                   # Partnerrolle (z.B. Auftraggeber, Warenempfänger, ...)
+        E2EDKA1_PARTN                   # Partnernummer
+        E2EDKA1_LIFNR                   # Lieferantennummer beim Kunden
+        E2EDKA1_NAME1                   # Name 1
+        E2EDKA1_NAME2                   # Name 2
+        E2EDKA1_NAME3                   # Name 3
+        E2EDKA1_NAME4                   # Name 4
+        E2EDKA1_STRAS                   # Straße und Hausnummer 1
+        E2EDKA1_STRS2                   # Straße und Hausnummer 2
+        E2EDKA1_PFACH                   # Postfach
+        E2EDKA1_ORT01                   # Ort
+        E2EDKA1_COUNC                   # County code
+        E2EDKA1_PSTLZ                   # Postleitzahl
+        E2EDKA1_PSTL2                   # Postleitzahl des Postfachs
+        E2EDKA1_LAND1                   # Länderschlüssel
+        E2EDKA1_ABLAD                   # Abladestelle
+        E2EDKA1_PERNR                   # Personalnummer des Ansprechpartners
+        E2EDKA1_PARNR                   # Ansprechpartnernummer (nicht Personalnummer)
+        E2EDKA1_TELF1                   # Telefonnummer 1 des Ansprechpartners
+        E2EDKA1_TELF2                   # Telefonnummer 2 des Ansprechpartners
+        E2EDKA1_TELBX                   # Teleboxnummer
+        E2EDKA1_TELFX                   # Telefaxnummer
+        E2EDKA1_TELTX                   # Teletexnummer
+        E2EDKA1_TELX1                   # Telexnummer
+        E2EDKA1_SPRAS                   # Sprachenschlüssel
+        E2EDKA1_ANRED                   # Anrede
+        E2EDKA1_ORT02                   # Ortsteil
+        E2EDKA1_HAUSN                   # Hausnummer
+        E2EDKA1_STOCK                   # Stockwerk
+        E2EDKA1_REGIO                   # Region
+        E2EDKA1_PARGE                   # Geschlecht des Partners
+        E2EDKA1_ISOAL                   # ISO-Code des Landes
+        E2EDKA1_ISONU                   # ISO-Code des Landes
+        E2EDKA1_FCODE                   # Firmencode Frankreich
+        E2EDKA1_IHREZ                   # Ihr Zeichen (vom Partner)
+        E2EDKA1_BNAME                   # IDOC Benutzername
+        E2EDKA1_PAORG                   # IDOC Organisationscode
+        E2EDKA1_ORGTX                   # IDOC Organisationscode
+        E2EDKA1_PAGRU                   # IDOC Gruppencode
+        E2EDKA1_KNREF                   # Kundenindividuelle Bez. des Geschäftspartners (Werk, Lager)
+        E2EDKA1_ILNNR                   # Characterfeld der Länge 70
+        E2EDKA1_PFORT                   # Ort des Postfachs
+        E2EDKA1_SPRAS_ISO               # Sprache nach ISO 639
+        E2EDKA1_TITLE                   # Anrede
+        REST*;
+
+E2EDKA1_SEGNAM       :  STRINGA { LENGTH =  7, DEFAULT = "E2EDKA1" };
+E2EDKA1_SEGNAM2      :  STRINGA { LENGTH =  3, DEFAULT = "003" };
+E2EDKA1_SEGNAM3      :  STRINGA { LENGTH = 20 };
+E2EDKA1_MANDT        :  STRINGA { LENGTH =  3 };
+E2EDKA1_DOCNUM       :  STRINGA { LENGTH = 16 };
+E2EDKA1_SEGNUM       :  STRINGA { LENGTH =  6 };
+E2EDKA1_PSGNUM       :  STRINGA { LENGTH =  6 };
+E2EDKA1_HLEVEL       :  STRINGA { LENGTH =  2 };
+E2EDKA1_PARVW        :  STRINGA { LENGTH =  3 };
+E2EDKA1_PARTN        :  STRINGA { LENGTH = 17 };
+E2EDKA1_LIFNR        :  STRINGA { LENGTH = 17 };
+E2EDKA1_NAME1        :  STRINGA { LENGTH = 35 };
+E2EDKA1_NAME2        :  STRINGA { LENGTH = 35 };
+E2EDKA1_NAME3        :  STRINGA { LENGTH = 35 };
+E2EDKA1_NAME4        :  STRINGA { LENGTH = 35 };
+E2EDKA1_STRAS        :  STRINGA { LENGTH = 35 };
+E2EDKA1_STRS2        :  STRINGA { LENGTH = 35 };
+E2EDKA1_PFACH        :  STRINGA { LENGTH = 35 };
+E2EDKA1_ORT01        :  STRINGA { LENGTH = 35 };
+E2EDKA1_COUNC        :  STRINGA { LENGTH =  9 };
+E2EDKA1_PSTLZ        :  STRINGA { LENGTH =  9 };
+E2EDKA1_PSTL2        :  STRINGA { LENGTH =  9 };
+E2EDKA1_LAND1        :  STRINGA { LENGTH =  3 };
+E2EDKA1_ABLAD        :  STRINGA { LENGTH = 35 };
+E2EDKA1_PERNR        :  STRINGA { LENGTH = 30 };
+E2EDKA1_PARNR        :  STRINGA { LENGTH = 30 };
+E2EDKA1_TELF1        :  STRINGA { LENGTH = 25 };
+E2EDKA1_TELF2        :  STRINGA { LENGTH = 25 };
+E2EDKA1_TELBX        :  STRINGA { LENGTH = 25 };
+E2EDKA1_TELFX        :  STRINGA { LENGTH = 25 };
+E2EDKA1_TELTX        :  STRINGA { LENGTH = 25 };
+E2EDKA1_TELX1        :  STRINGA { LENGTH = 25 };
+E2EDKA1_SPRAS        :  STRINGA { LENGTH =  1 };
+E2EDKA1_ANRED        :  STRINGA { LENGTH = 15 };
+E2EDKA1_ORT02        :  STRINGA { LENGTH = 35 };
+E2EDKA1_HAUSN        :  STRINGA { LENGTH =  6 };
+E2EDKA1_STOCK        :  STRINGA { LENGTH =  6 };
+E2EDKA1_REGIO        :  STRINGA { LENGTH =  3 };
+E2EDKA1_PARGE        :  STRINGA { LENGTH =  1 };
+E2EDKA1_ISOAL        :  STRINGA { LENGTH =  2 };
+E2EDKA1_ISONU        :  STRINGA { LENGTH =  2 };
+E2EDKA1_FCODE        :  STRINGA { LENGTH = 20 };
+E2EDKA1_IHREZ        :  STRINGA { LENGTH = 30 };
+E2EDKA1_BNAME        :  STRINGA { LENGTH = 35 };
+E2EDKA1_PAORG        :  STRINGA { LENGTH = 30 };
+E2EDKA1_ORGTX        :  STRINGA { LENGTH = 35 };
+E2EDKA1_PAGRU        :  STRINGA { LENGTH = 30 };
+E2EDKA1_KNREF        :  STRINGA { LENGTH = 30 };
+E2EDKA1_ILNNR        :  STRINGA { LENGTH = 70 };
+E2EDKA1_PFORT        :  STRINGA { LENGTH = 35 };
+E2EDKA1_SPRAS_ISO    :  STRINGA { LENGTH =  2 };
+E2EDKA1_TITLE        :  STRINGA { LENGTH = 15 };
+
+#---------------------------------------------------------------------------------------------------------------#
+#       E2EDKA1003_AB                                                                                           #
+#---------------------------------------------------------------------------------------------------------------#
+
+E2EDKA1_AB { DELIMITER = "\x0a" }:
+        E2EDKA1_AB_SEGNAM               # Segment (externer Name)
+        E2EDKA1_AB_SEGNAM2              # Segment (externer Name)
+        E2EDKA1_AB_SEGNAM3              # Segment (externer Name)
+        E2EDKA1_AB_MANDT                # Mandant
+        E2EDKA1_AB_DOCNUM               # Nummer des IDocs
+        E2EDKA1_AB_SEGNUM               # Segmentnummer
+        E2EDKA1_AB_PSGNUM               # Nummer des übergeordneten Elternsegments
+        E2EDKA1_AB_HLEVEL               # Hierarchieebene des SAP-Segmentes
+        E2EDKA1_AB_PARVW                # Partnerrolle (z.B. Auftraggeber, Warenempfänger, ...)
+        E2EDKA1_AB_PARTN                # Partnernummer
+        E2EDKA1_AB_LIFNR                # Lieferantennummer beim Kunden
+        E2EDKA1_AB_NAME1                # Name 1
+        E2EDKA1_AB_NAME2                # Name 2
+        E2EDKA1_AB_NAME3                # Name 3
+        E2EDKA1_AB_NAME4                # Name 4
+        E2EDKA1_AB_STRAS                # Straße und Hausnummer 1
+        E2EDKA1_AB_STRS2                # Straße und Hausnummer 2
+        E2EDKA1_AB_PFACH                # Postfach
+        E2EDKA1_AB_ORT01                # Ort
+        E2EDKA1_AB_COUNC                # County code
+        E2EDKA1_AB_PSTLZ                # Postleitzahl
+        E2EDKA1_AB_PSTL2                # Postleitzahl des Postfachs
+        E2EDKA1_AB_LAND1                # Länderschlüssel
+        E2EDKA1_AB_ABLAD                # Abladestelle
+        E2EDKA1_AB_PERNR                # Personalnummer des Ansprechpartners
+        E2EDKA1_AB_PARNR                # Ansprechpartnernummer (nicht Personalnummer)
+        E2EDKA1_AB_TELF1                # Telefonnummer 1 des Ansprechpartners
+        E2EDKA1_AB_TELF2                # Telefonnummer 2 des Ansprechpartners
+        E2EDKA1_AB_TELBX                # Teleboxnummer
+        E2EDKA1_AB_TELFX                # Telefaxnummer
+        E2EDKA1_AB_TELTX                # Teletexnummer
+        E2EDKA1_AB_TELX1                # Telexnummer
+        E2EDKA1_AB_SPRAS                # Sprachenschlüssel
+        E2EDKA1_AB_ANRED                # Anrede
+        E2EDKA1_AB_ORT02                # Ortsteil
+        E2EDKA1_AB_HAUSN                # Hausnummer
+        E2EDKA1_AB_STOCK                # Stockwerk
+        E2EDKA1_AB_REGIO                # Region
+        E2EDKA1_AB_PARGE                # Geschlecht des Partners
+        E2EDKA1_AB_ISOAL                # ISO-Code des Landes
+        E2EDKA1_AB_ISONU                # ISO-Code des Landes
+        E2EDKA1_AB_FCODE                # Firmencode Frankreich
+        E2EDKA1_AB_IHREZ                # Ihr Zeichen (vom Partner)
+        E2EDKA1_AB_BNAME                # IDOC Benutzername
+        E2EDKA1_AB_PAORG                # IDOC Organisationscode
+        E2EDKA1_AB_ORGTX                # IDOC Organisationscode
+        E2EDKA1_AB_PAGRU                # IDOC Gruppencode
+        E2EDKA1_AB_KNREF                # Kundenindividuelle Bez. des Geschäftspartners (Werk, Lager)
+        E2EDKA1_AB_ILNNR                # Characterfeld der Länge 70
+        E2EDKA1_AB_PFORT                # Ort des Postfachs
+        E2EDKA1_AB_SPRAS_ISO            # Sprache nach ISO 639
+        E2EDKA1_AB_TITLE                # Anrede
+        REST*;
+
+E2EDKA1_AB_SEGNAM   :  STRINGA { LENGTH =  7, DEFAULT = "E2EDKA1" };
+E2EDKA1_AB_SEGNAM2  :  STRINGA { LENGTH =  3, DEFAULT = "003" };
+E2EDKA1_AB_SEGNAM3  :  STRINGA { LENGTH = 20 };
+E2EDKA1_AB_MANDT    :  STRINGA { LENGTH =  3 };
+E2EDKA1_AB_DOCNUM   :  STRINGA { LENGTH = 16 };
+E2EDKA1_AB_SEGNUM   :  STRINGA { LENGTH =  6 };
+E2EDKA1_AB_PSGNUM   :  STRINGA { LENGTH =  6 };
+E2EDKA1_AB_HLEVEL   :  STRINGA { LENGTH =  2 };
+E2EDKA1_AB_PARVW    :  STRINGA { LENGTH =  3, DEFAULT = "AB " };
+E2EDKA1_AB_PARTN    :  STRINGA { LENGTH = 17 };
+E2EDKA1_AB_LIFNR    :  STRINGA { LENGTH = 17 };
+E2EDKA1_AB_NAME1    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AB_NAME2    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AB_NAME3    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AB_NAME4    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AB_STRAS    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AB_STRS2    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AB_PFACH    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AB_ORT01    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AB_COUNC    :  STRINGA { LENGTH =  9 };
+E2EDKA1_AB_PSTLZ    :  STRINGA { LENGTH =  9 };
+E2EDKA1_AB_PSTL2    :  STRINGA { LENGTH =  9 };
+E2EDKA1_AB_LAND1    :  STRINGA { LENGTH =  3 };
+E2EDKA1_AB_ABLAD    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AB_PERNR    :  STRINGA { LENGTH = 30 };
+E2EDKA1_AB_PARNR    :  STRINGA { LENGTH = 30 };
+E2EDKA1_AB_TELF1    :  STRINGA { LENGTH = 25 };
+E2EDKA1_AB_TELF2    :  STRINGA { LENGTH = 25 };
+E2EDKA1_AB_TELBX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_AB_TELFX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_AB_TELTX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_AB_TELX1    :  STRINGA { LENGTH = 25 };
+E2EDKA1_AB_SPRAS    :  STRINGA { LENGTH =  1 };
+E2EDKA1_AB_ANRED    :  STRINGA { LENGTH = 15 };
+E2EDKA1_AB_ORT02    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AB_HAUSN    :  STRINGA { LENGTH =  6 };
+E2EDKA1_AB_STOCK    :  STRINGA { LENGTH =  6 };
+E2EDKA1_AB_REGIO    :  STRINGA { LENGTH =  3 };
+E2EDKA1_AB_PARGE    :  STRINGA { LENGTH =  1 };
+E2EDKA1_AB_ISOAL    :  STRINGA { LENGTH =  2 };
+E2EDKA1_AB_ISONU    :  STRINGA { LENGTH =  2 };
+E2EDKA1_AB_FCODE    :  STRINGA { LENGTH = 20 };
+E2EDKA1_AB_IHREZ    :  STRINGA { LENGTH = 30 };
+E2EDKA1_AB_BNAME    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AB_PAORG    :  STRINGA { LENGTH = 30 };
+E2EDKA1_AB_ORGTX    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AB_PAGRU    :  STRINGA { LENGTH = 30 };
+E2EDKA1_AB_KNREF    :  STRINGA { LENGTH = 30 };
+E2EDKA1_AB_ILNNR    :  STRINGA { LENGTH = 70 };
+E2EDKA1_AB_PFORT    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AB_SPRAS_ISO:  STRINGA { LENGTH =  2 };
+E2EDKA1_AB_TITLE    :  STRINGA { LENGTH = 15 };
+
+#---------------------------------------------------------------------------------------------------------------#
+#       E2EDKA1003_AG                                                                                           #
+#---------------------------------------------------------------------------------------------------------------#
+
+E2EDKA1_AG { DELIMITER = "\x0a" }:
+        E2EDKA1_AG_SEGNAM               # Segment (externer Name)
+        E2EDKA1_AG_SEGNAM2              # Segment (externer Name)
+        E2EDKA1_AG_SEGNAM3              # Segment (externer Name)
+        E2EDKA1_AG_MANDT                # Mandant
+        E2EDKA1_AG_DOCNUM               # Nummer des IDocs
+        E2EDKA1_AG_SEGNUM               # Segmentnummer
+        E2EDKA1_AG_PSGNUM               # Nummer des übergeordneten Elternsegments
+        E2EDKA1_AG_HLEVEL               # Hierarchieebene des SAP-Segmentes
+        E2EDKA1_AG_PARVW                # Partnerrolle (z.B. Auftraggeber, Warenempfänger, ...)
+        E2EDKA1_AG_PARTN                # Partnernummer
+        E2EDKA1_AG_LIFNR                # Lieferantennummer beim Kunden
+        E2EDKA1_AG_NAME1                # Name 1
+        E2EDKA1_AG_NAME2                # Name 2
+        E2EDKA1_AG_NAME3                # Name 3
+        E2EDKA1_AG_NAME4                # Name 4
+        E2EDKA1_AG_STRAS                # Straße und Hausnummer 1
+        E2EDKA1_AG_STRS2                # Straße und Hausnummer 2
+        E2EDKA1_AG_PFACH                # Postfach
+        E2EDKA1_AG_ORT01                # Ort
+        E2EDKA1_AG_COUNC                # County code
+        E2EDKA1_AG_PSTLZ                # Postleitzahl
+        E2EDKA1_AG_PSTL2                # Postleitzahl des Postfachs
+        E2EDKA1_AG_LAND1                # Länderschlüssel
+        E2EDKA1_AG_ABLAD                # Abladestelle
+        E2EDKA1_AG_PERNR                # Personalnummer des Ansprechpartners
+        E2EDKA1_AG_PARNR                # Ansprechpartnernummer (nicht Personalnummer)
+        E2EDKA1_AG_TELF1                # Telefonnummer 1 des Ansprechpartners
+        E2EDKA1_AG_TELF2                # Telefonnummer 2 des Ansprechpartners
+        E2EDKA1_AG_TELBX                # Teleboxnummer
+        E2EDKA1_AG_TELFX                # Telefaxnummer
+        E2EDKA1_AG_TELTX                # Teletexnummer
+        E2EDKA1_AG_TELX1                # Telexnummer
+        E2EDKA1_AG_SPRAS                # Sprachenschlüssel
+        E2EDKA1_AG_ANRED                # Anrede
+        E2EDKA1_AG_ORT02                # Ortsteil
+        E2EDKA1_AG_HAUSN                # Hausnummer
+        E2EDKA1_AG_STOCK                # Stockwerk
+        E2EDKA1_AG_REGIO                # Region
+        E2EDKA1_AG_PARGE                # Geschlecht des Partners
+        E2EDKA1_AG_ISOAL                # ISO-Code des Landes
+        E2EDKA1_AG_ISONU                # ISO-Code des Landes
+        E2EDKA1_AG_FCODE                # Firmencode Frankreich
+        E2EDKA1_AG_IHREZ                # Ihr Zeichen (vom Partner)
+        E2EDKA1_AG_BNAME                # IDOC Benutzername
+        E2EDKA1_AG_PAORG                # IDOC Organisationscode
+        E2EDKA1_AG_ORGTX                # IDOC Organisationscode
+        E2EDKA1_AG_PAGRU                # IDOC Gruppencode
+        E2EDKA1_AG_KNREF                # Kundenindividuelle Bez. des Geschäftspartners (Werk, Lager)
+        E2EDKA1_AG_ILNNR                # Characterfeld der Länge 70
+        E2EDKA1_AG_PFORT                # Ort des Postfachs
+        E2EDKA1_AG_SPRAS_ISO            # Sprache nach ISO 639
+        E2EDKA1_AG_TITLE                # Anrede
+        REST*;
+
+E2EDKA1_AG_SEGNAM   :  STRINGA { LENGTH =  7, DEFAULT = "E2EDKA1" };
+E2EDKA1_AG_SEGNAM2  :  STRINGA { LENGTH =  3, DEFAULT = "003" };
+E2EDKA1_AG_SEGNAM3  :  STRINGA { LENGTH = 20 };
+E2EDKA1_AG_MANDT    :  STRINGA { LENGTH =  3 };
+E2EDKA1_AG_DOCNUM   :  STRINGA { LENGTH = 16 };
+E2EDKA1_AG_SEGNUM   :  STRINGA { LENGTH =  6 };
+E2EDKA1_AG_PSGNUM   :  STRINGA { LENGTH =  6 };
+E2EDKA1_AG_HLEVEL   :  STRINGA { LENGTH =  2 };
+E2EDKA1_AG_PARVW    :  STRINGA { LENGTH =  3, DEFAULT = "AG " };
+E2EDKA1_AG_PARTN    :  STRINGA { LENGTH = 17 };
+E2EDKA1_AG_LIFNR    :  STRINGA { LENGTH = 17 };
+E2EDKA1_AG_NAME1    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AG_NAME2    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AG_NAME3    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AG_NAME4    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AG_STRAS    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AG_STRS2    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AG_PFACH    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AG_ORT01    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AG_COUNC    :  STRINGA { LENGTH =  9 };
+E2EDKA1_AG_PSTLZ    :  STRINGA { LENGTH =  9 };
+E2EDKA1_AG_PSTL2    :  STRINGA { LENGTH =  9 };
+E2EDKA1_AG_LAND1    :  STRINGA { LENGTH =  3 };
+E2EDKA1_AG_ABLAD    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AG_PERNR    :  STRINGA { LENGTH = 30 };
+E2EDKA1_AG_PARNR    :  STRINGA { LENGTH = 30 };
+E2EDKA1_AG_TELF1    :  STRINGA { LENGTH = 25 };
+E2EDKA1_AG_TELF2    :  STRINGA { LENGTH = 25 };
+E2EDKA1_AG_TELBX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_AG_TELFX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_AG_TELTX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_AG_TELX1    :  STRINGA { LENGTH = 25 };
+E2EDKA1_AG_SPRAS    :  STRINGA { LENGTH =  1 };
+E2EDKA1_AG_ANRED    :  STRINGA { LENGTH = 15 };
+E2EDKA1_AG_ORT02    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AG_HAUSN    :  STRINGA { LENGTH =  6 };
+E2EDKA1_AG_STOCK    :  STRINGA { LENGTH =  6 };
+E2EDKA1_AG_REGIO    :  STRINGA { LENGTH =  3 };
+E2EDKA1_AG_PARGE    :  STRINGA { LENGTH =  1 };
+E2EDKA1_AG_ISOAL    :  STRINGA { LENGTH =  2 };
+E2EDKA1_AG_ISONU    :  STRINGA { LENGTH =  2 };
+E2EDKA1_AG_FCODE    :  STRINGA { LENGTH = 20 };
+E2EDKA1_AG_IHREZ    :  STRINGA { LENGTH = 30 };
+E2EDKA1_AG_BNAME    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AG_PAORG    :  STRINGA { LENGTH = 30 };
+E2EDKA1_AG_ORGTX    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AG_PAGRU    :  STRINGA { LENGTH = 30 };
+E2EDKA1_AG_KNREF    :  STRINGA { LENGTH = 30 };
+E2EDKA1_AG_ILNNR    :  STRINGA { LENGTH = 70 };
+E2EDKA1_AG_PFORT    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AG_SPRAS_ISO:  STRINGA { LENGTH =  2 };
+E2EDKA1_AG_TITLE    :  STRINGA { LENGTH = 15 };
+
+#---------------------------------------------------------------------------------------------------------------#
+#       E2EDKA1003_AP                                                                                           #
+#---------------------------------------------------------------------------------------------------------------#
+
+E2EDKA1_AP { DELIMITER = "\x0a" }:
+        E2EDKA1_AP_SEGNAM               # Segment (externer Name)
+        E2EDKA1_AP_SEGNAM2              # Segment (externer Name)
+        E2EDKA1_AP_SEGNAM3              # Segment (externer Name)
+        E2EDKA1_AP_MANDT                # Mandant
+        E2EDKA1_AP_DOCNUM               # Nummer des IDocs
+        E2EDKA1_AP_SEGNUM               # Segmentnummer
+        E2EDKA1_AP_PSGNUM               # Nummer des übergeordneten Elternsegments
+        E2EDKA1_AP_HLEVEL               # Hierarchieebene des SAP-Segmentes
+        E2EDKA1_AP_PARVW                # Partnerrolle (z.B. Auftraggeber, Warenempfänger, ...)
+        E2EDKA1_AP_PARTN                # Partnernummer
+        E2EDKA1_AP_LIFNR                # Lieferantennummer beim Kunden
+        E2EDKA1_AP_NAME1                # Name 1
+        E2EDKA1_AP_NAME2                # Name 2
+        E2EDKA1_AP_NAME3                # Name 3
+        E2EDKA1_AP_NAME4                # Name 4
+        E2EDKA1_AP_STRAS                # Straße und Hausnummer 1
+        E2EDKA1_AP_STRS2                # Straße und Hausnummer 2
+        E2EDKA1_AP_PFACH                # Postfach
+        E2EDKA1_AP_ORT01                # Ort
+        E2EDKA1_AP_COUNC                # County code
+        E2EDKA1_AP_PSTLZ                # Postleitzahl
+        E2EDKA1_AP_PSTL2                # Postleitzahl des Postfachs
+        E2EDKA1_AP_LAND1                # Länderschlüssel
+        E2EDKA1_AP_ABLAD                # Abladestelle
+        E2EDKA1_AP_PERNR                # Personalnummer des Ansprechpartners
+        E2EDKA1_AP_PARNR                # Ansprechpartnernummer (nicht Personalnummer)
+        E2EDKA1_AP_TELF1                # Telefonnummer 1 des Ansprechpartners
+        E2EDKA1_AP_TELF2                # Telefonnummer 2 des Ansprechpartners
+        E2EDKA1_AP_TELBX                # Teleboxnummer
+        E2EDKA1_AP_TELFX                # Telefaxnummer
+        E2EDKA1_AP_TELTX                # Teletexnummer
+        E2EDKA1_AP_TELX1                # Telexnummer
+        E2EDKA1_AP_SPRAS                # Sprachenschlüssel
+        E2EDKA1_AP_ANRED                # Anrede
+        E2EDKA1_AP_ORT02                # Ortsteil
+        E2EDKA1_AP_HAUSN                # Hausnummer
+        E2EDKA1_AP_STOCK                # Stockwerk
+        E2EDKA1_AP_REGIO                # Region
+        E2EDKA1_AP_PARGE                # Geschlecht des Partners
+        E2EDKA1_AP_ISOAL                # ISO-Code des Landes
+        E2EDKA1_AP_ISONU                # ISO-Code des Landes
+        E2EDKA1_AP_FCODE                # Firmencode Frankreich
+        E2EDKA1_AP_IHREZ                # Ihr Zeichen (vom Partner)
+        E2EDKA1_AP_BNAME                # IDOC Benutzername
+        E2EDKA1_AP_PAORG                # IDOC Organisationscode
+        E2EDKA1_AP_ORGTX                # IDOC Organisationscode
+        E2EDKA1_AP_PAGRU                # IDOC Gruppencode
+        E2EDKA1_AP_KNREF                # Kundenindividuelle Bez. des Geschäftspartners (Werk, Lager)
+        E2EDKA1_AP_ILNNR                # Characterfeld der Länge 70
+        E2EDKA1_AP_PFORT                # Ort des Postfachs
+        E2EDKA1_AP_SPRAS_ISO            # Sprache nach ISO 639
+        E2EDKA1_AP_TITLE                # Anrede
+        REST*;
+
+E2EDKA1_AP_SEGNAM   :  STRINGA { LENGTH =  7, DEFAULT = "E2EDKA1" };
+E2EDKA1_AP_SEGNAM2  :  STRINGA { LENGTH =  3, DEFAULT = "003" };
+E2EDKA1_AP_SEGNAM3  :  STRINGA { LENGTH = 20 };
+E2EDKA1_AP_MANDT    :  STRINGA { LENGTH =  3 };
+E2EDKA1_AP_DOCNUM   :  STRINGA { LENGTH = 16 };
+E2EDKA1_AP_SEGNUM   :  STRINGA { LENGTH =  6 };
+E2EDKA1_AP_PSGNUM   :  STRINGA { LENGTH =  6 };
+E2EDKA1_AP_HLEVEL   :  STRINGA { LENGTH =  2 };
+E2EDKA1_AP_PARVW    :  STRINGA { LENGTH =  3, DEFAULT = "AP " };
+E2EDKA1_AP_PARTN    :  STRINGA { LENGTH = 17 };
+E2EDKA1_AP_LIFNR    :  STRINGA { LENGTH = 17 };
+E2EDKA1_AP_NAME1    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AP_NAME2    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AP_NAME3    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AP_NAME4    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AP_STRAS    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AP_STRS2    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AP_PFACH    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AP_ORT01    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AP_COUNC    :  STRINGA { LENGTH =  9 };
+E2EDKA1_AP_PSTLZ    :  STRINGA { LENGTH =  9 };
+E2EDKA1_AP_PSTL2    :  STRINGA { LENGTH =  9 };
+E2EDKA1_AP_LAND1    :  STRINGA { LENGTH =  3 };
+E2EDKA1_AP_ABLAD    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AP_PERNR    :  STRINGA { LENGTH = 30 };
+E2EDKA1_AP_PARNR    :  STRINGA { LENGTH = 30 };
+E2EDKA1_AP_TELF1    :  STRINGA { LENGTH = 25 };
+E2EDKA1_AP_TELF2    :  STRINGA { LENGTH = 25 };
+E2EDKA1_AP_TELBX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_AP_TELFX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_AP_TELTX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_AP_TELX1    :  STRINGA { LENGTH = 25 };
+E2EDKA1_AP_SPRAS    :  STRINGA { LENGTH =  1 };
+E2EDKA1_AP_ANRED    :  STRINGA { LENGTH = 15 };
+E2EDKA1_AP_ORT02    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AP_HAUSN    :  STRINGA { LENGTH =  6 };
+E2EDKA1_AP_STOCK    :  STRINGA { LENGTH =  6 };
+E2EDKA1_AP_REGIO    :  STRINGA { LENGTH =  3 };
+E2EDKA1_AP_PARGE    :  STRINGA { LENGTH =  1 };
+E2EDKA1_AP_ISOAL    :  STRINGA { LENGTH =  2 };
+E2EDKA1_AP_ISONU    :  STRINGA { LENGTH =  2 };
+E2EDKA1_AP_FCODE    :  STRINGA { LENGTH = 20 };
+E2EDKA1_AP_IHREZ    :  STRINGA { LENGTH = 30 };
+E2EDKA1_AP_BNAME    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AP_PAORG    :  STRINGA { LENGTH = 30 };
+E2EDKA1_AP_ORGTX    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AP_PAGRU    :  STRINGA { LENGTH = 30 };
+E2EDKA1_AP_KNREF    :  STRINGA { LENGTH = 30 };
+E2EDKA1_AP_ILNNR    :  STRINGA { LENGTH = 70 };
+E2EDKA1_AP_PFORT    :  STRINGA { LENGTH = 35 };
+E2EDKA1_AP_SPRAS_ISO:  STRINGA { LENGTH =  2 };
+E2EDKA1_AP_TITLE    :  STRINGA { LENGTH = 15 };
+
+#---------------------------------------------------------------------------------------------------------------#
+#       E2EDKA1003_LF                                                                                           #
+#---------------------------------------------------------------------------------------------------------------#
+
+E2EDKA1_LF { DELIMITER = "\x0a" }:
+        E2EDKA1_LF_SEGNAM               # Segment (externer Name)
+        E2EDKA1_LF_SEGNAM2              # Segment (externer Name)
+        E2EDKA1_LF_SEGNAM3              # Segment (externer Name)
+        E2EDKA1_LF_MANDT                # Mandant
+        E2EDKA1_LF_DOCNUM               # Nummer des IDocs
+        E2EDKA1_LF_SEGNUM               # Segmentnummer
+        E2EDKA1_LF_PSGNUM               # Nummer des übergeordneten Elternsegments
+        E2EDKA1_LF_HLEVEL               # Hierarchieebene des SAP-Segmentes
+        E2EDKA1_LF_PARVW                # Partnerrolle (z.B. Auftraggeber, Warenempfänger, ...)
+        E2EDKA1_LF_PARTN                # Partnernummer
+        E2EDKA1_LF_LIFNR                # Lieferantennummer beim Kunden
+        E2EDKA1_LF_NAME1                # Name 1
+        E2EDKA1_LF_NAME2                # Name 2
+        E2EDKA1_LF_NAME3                # Name 3
+        E2EDKA1_LF_NAME4                # Name 4
+        E2EDKA1_LF_STRAS                # Straße und Hausnummer 1
+        E2EDKA1_LF_STRS2                # Straße und Hausnummer 2
+        E2EDKA1_LF_PFACH                # Postfach
+        E2EDKA1_LF_ORT01                # Ort
+        E2EDKA1_LF_COUNC                # County code
+        E2EDKA1_LF_PSTLZ                # Postleitzahl
+        E2EDKA1_LF_PSTL2                # Postleitzahl des Postfachs
+        E2EDKA1_LF_LAND1                # Länderschlüssel
+        E2EDKA1_LF_ABLAD                # Abladestelle
+        E2EDKA1_LF_PERNR                # Personalnummer des Ansprechpartners
+        E2EDKA1_LF_PARNR                # Ansprechpartnernummer (nicht Personalnummer)
+        E2EDKA1_LF_TELF1                # Telefonnummer 1 des Ansprechpartners
+        E2EDKA1_LF_TELF2                # Telefonnummer 2 des Ansprechpartners
+        E2EDKA1_LF_TELBX                # Teleboxnummer
+        E2EDKA1_LF_TELFX                # Telefaxnummer
+        E2EDKA1_LF_TELTX                # Teletexnummer
+        E2EDKA1_LF_TELX1                # Telexnummer
+        E2EDKA1_LF_SPRAS                # Sprachenschlüssel
+        E2EDKA1_LF_ANRED                # Anrede
+        E2EDKA1_LF_ORT02                # Ortsteil
+        E2EDKA1_LF_HAUSN                # Hausnummer
+        E2EDKA1_LF_STOCK                # Stockwerk
+        E2EDKA1_LF_REGIO                # Region
+        E2EDKA1_LF_PARGE                # Geschlecht des Partners
+        E2EDKA1_LF_ISOAL                # ISO-Code des Landes
+        E2EDKA1_LF_ISONU                # ISO-Code des Landes
+        E2EDKA1_LF_FCODE                # Firmencode Frankreich
+        E2EDKA1_LF_IHREZ                # Ihr Zeichen (vom Partner)
+        E2EDKA1_LF_BNAME                # IDOC Benutzername
+        E2EDKA1_LF_PAORG                # IDOC Organisationscode
+        E2EDKA1_LF_ORGTX                # IDOC Organisationscode
+        E2EDKA1_LF_PAGRU                # IDOC Gruppencode
+        E2EDKA1_LF_KNREF                # Kundenindividuelle Bez. des Geschäftspartners (Werk, Lager)
+        E2EDKA1_LF_ILNNR                # Characterfeld der Länge 70
+        E2EDKA1_LF_PFORT                # Ort des Postfachs
+        E2EDKA1_LF_SPRAS_ISO            # Sprache nach ISO 639
+        E2EDKA1_LF_TITLE                # Anrede
+        REST*;
+
+E2EDKA1_LF_SEGNAM   :  STRINGA { LENGTH =  7, DEFAULT = "E2EDKA1" };
+E2EDKA1_LF_SEGNAM2  :  STRINGA { LENGTH =  3, DEFAULT = "003" };
+E2EDKA1_LF_SEGNAM3  :  STRINGA { LENGTH = 20 };
+E2EDKA1_LF_MANDT    :  STRINGA { LENGTH =  3 };
+E2EDKA1_LF_DOCNUM   :  STRINGA { LENGTH = 16 };
+E2EDKA1_LF_SEGNUM   :  STRINGA { LENGTH =  6 };
+E2EDKA1_LF_PSGNUM   :  STRINGA { LENGTH =  6 };
+E2EDKA1_LF_HLEVEL   :  STRINGA { LENGTH =  2 };
+E2EDKA1_LF_PARVW    :  STRINGA { LENGTH =  3, DEFAULT = "LF " };
+E2EDKA1_LF_PARTN    :  STRINGA { LENGTH = 17 };
+E2EDKA1_LF_LIFNR    :  STRINGA { LENGTH = 17 };
+E2EDKA1_LF_NAME1    :  STRINGA { LENGTH = 35 };
+E2EDKA1_LF_NAME2    :  STRINGA { LENGTH = 35 };
+E2EDKA1_LF_NAME3    :  STRINGA { LENGTH = 35 };
+E2EDKA1_LF_NAME4    :  STRINGA { LENGTH = 35 };
+E2EDKA1_LF_STRAS    :  STRINGA { LENGTH = 35 };
+E2EDKA1_LF_STRS2    :  STRINGA { LENGTH = 35 };
+E2EDKA1_LF_PFACH    :  STRINGA { LENGTH = 35 };
+E2EDKA1_LF_ORT01    :  STRINGA { LENGTH = 35 };
+E2EDKA1_LF_COUNC    :  STRINGA { LENGTH =  9 };
+E2EDKA1_LF_PSTLZ    :  STRINGA { LENGTH =  9 };
+E2EDKA1_LF_PSTL2    :  STRINGA { LENGTH =  9 };
+E2EDKA1_LF_LAND1    :  STRINGA { LENGTH =  3 };
+E2EDKA1_LF_ABLAD    :  STRINGA { LENGTH = 35 };
+E2EDKA1_LF_PERNR    :  STRINGA { LENGTH = 30 };
+E2EDKA1_LF_PARNR    :  STRINGA { LENGTH = 30 };
+E2EDKA1_LF_TELF1    :  STRINGA { LENGTH = 25 };
+E2EDKA1_LF_TELF2    :  STRINGA { LENGTH = 25 };
+E2EDKA1_LF_TELBX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_LF_TELFX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_LF_TELTX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_LF_TELX1    :  STRINGA { LENGTH = 25 };
+E2EDKA1_LF_SPRAS    :  STRINGA { LENGTH =  1 };
+E2EDKA1_LF_ANRED    :  STRINGA { LENGTH = 15 };
+E2EDKA1_LF_ORT02    :  STRINGA { LENGTH = 35 };
+E2EDKA1_LF_HAUSN    :  STRINGA { LENGTH =  6 };
+E2EDKA1_LF_STOCK    :  STRINGA { LENGTH =  6 };
+E2EDKA1_LF_REGIO    :  STRINGA { LENGTH =  3 };
+E2EDKA1_LF_PARGE    :  STRINGA { LENGTH =  1 };
+E2EDKA1_LF_ISOAL    :  STRINGA { LENGTH =  2 };
+E2EDKA1_LF_ISONU    :  STRINGA { LENGTH =  2 };
+E2EDKA1_LF_FCODE    :  STRINGA { LENGTH = 20 };
+E2EDKA1_LF_IHREZ    :  STRINGA { LENGTH = 30 };
+E2EDKA1_LF_BNAME    :  STRINGA { LENGTH = 35 };
+E2EDKA1_LF_PAORG    :  STRINGA { LENGTH = 30 };
+E2EDKA1_LF_ORGTX    :  STRINGA { LENGTH = 35 };
+E2EDKA1_LF_PAGRU    :  STRINGA { LENGTH = 30 };
+E2EDKA1_LF_KNREF    :  STRINGA { LENGTH = 30 };
+E2EDKA1_LF_ILNNR    :  STRINGA { LENGTH = 70 };
+E2EDKA1_LF_PFORT    :  STRINGA { LENGTH = 35 };
+E2EDKA1_LF_SPRAS_ISO:  STRINGA { LENGTH =  2 };
+E2EDKA1_LF_TITLE    :  STRINGA { LENGTH = 15 };
+
+#---------------------------------------------------------------------------------------------------------------#
+#       E2EDKA1003_OB                                                                                           #
+#---------------------------------------------------------------------------------------------------------------#
+
+E2EDKA1_OB { DELIMITER = "\x0a" }:
+        E2EDKA1_OB_SEGNAM               # Segment (externer Name)
+        E2EDKA1_OB_SEGNAM2              # Segment (externer Name)
+        E2EDKA1_OB_SEGNAM3              # Segment (externer Name)
+        E2EDKA1_OB_MANDT                # Mandant
+        E2EDKA1_OB_DOCNUM               # Nummer des IDocs
+        E2EDKA1_OB_SEGNUM               # Segmentnummer
+        E2EDKA1_OB_PSGNUM               # Nummer des übergeordneten Elternsegments
+        E2EDKA1_OB_HLEVEL               # Hierarchieebene des SAP-Segmentes
+        E2EDKA1_OB_PARVW                # Partnerrolle (z.B. Auftraggeber, Warenempfänger, ...)
+        E2EDKA1_OB_PARTN                # Partnernummer
+        E2EDKA1_OB_LIFNR                # Lieferantennummer beim Kunden
+        E2EDKA1_OB_NAME1                # Name 1
+        E2EDKA1_OB_NAME2                # Name 2
+        E2EDKA1_OB_NAME3                # Name 3
+        E2EDKA1_OB_NAME4                # Name 4
+        E2EDKA1_OB_STRAS                # Straße und Hausnummer 1
+        E2EDKA1_OB_STRS2                # Straße und Hausnummer 2
+        E2EDKA1_OB_PFACH                # Postfach
+        E2EDKA1_OB_ORT01                # Ort
+        E2EDKA1_OB_COUNC                # County code
+        E2EDKA1_OB_PSTLZ                # Postleitzahl
+        E2EDKA1_OB_PSTL2                # Postleitzahl des Postfachs
+        E2EDKA1_OB_LAND1                # Länderschlüssel
+        E2EDKA1_OB_ABLAD                # Abladestelle
+        E2EDKA1_OB_PERNR                # Personalnummer des Ansprechpartners
+        E2EDKA1_OB_PARNR                # Ansprechpartnernummer (nicht Personalnummer)
+        E2EDKA1_OB_TELF1                # Telefonnummer 1 des Ansprechpartners
+        E2EDKA1_OB_TELF2                # Telefonnummer 2 des Ansprechpartners
+        E2EDKA1_OB_TELBX                # Teleboxnummer
+        E2EDKA1_OB_TELFX                # Telefaxnummer
+        E2EDKA1_OB_TELTX                # Teletexnummer
+        E2EDKA1_OB_TELX1                # Telexnummer
+        E2EDKA1_OB_SPRAS                # Sprachenschlüssel
+        E2EDKA1_OB_ANRED                # Anrede
+        E2EDKA1_OB_ORT02                # Ortsteil
+        E2EDKA1_OB_HAUSN                # Hausnummer
+        E2EDKA1_OB_STOCK                # Stockwerk
+        E2EDKA1_OB_REGIO                # Region
+        E2EDKA1_OB_PARGE                # Geschlecht des Partners
+        E2EDKA1_OB_ISOAL                # ISO-Code des Landes
+        E2EDKA1_OB_ISONU                # ISO-Code des Landes
+        E2EDKA1_OB_FCODE                # Firmencode Frankreich
+        E2EDKA1_OB_IHREZ                # Ihr Zeichen (vom Partner)
+        E2EDKA1_OB_BNAME                # IDOC Benutzername
+        E2EDKA1_OB_PAORG                # IDOC Organisationscode
+        E2EDKA1_OB_ORGTX                # IDOC Organisationscode
+        E2EDKA1_OB_PAGRU                # IDOC Gruppencode
+        E2EDKA1_OB_KNREF                # Kundenindividuelle Bez. des Geschäftspartners (Werk, Lager)
+        E2EDKA1_OB_ILNNR                # Characterfeld der Länge 70
+        E2EDKA1_OB_PFORT                # Ort des Postfachs
+        E2EDKA1_OB_SPRAS_ISO            # Sprache nach ISO 639
+        E2EDKA1_OB_TITLE                # Anrede
+        REST*;
+
+E2EDKA1_OB_SEGNAM   :  STRINGA { LENGTH =  7, DEFAULT = "E2EDKA1" };
+E2EDKA1_OB_SEGNAM2  :  STRINGA { LENGTH =  3, DEFAULT = "003" };
+E2EDKA1_OB_SEGNAM3  :  STRINGA { LENGTH = 20 };
+E2EDKA1_OB_MANDT    :  STRINGA { LENGTH =  3 };
+E2EDKA1_OB_DOCNUM   :  STRINGA { LENGTH = 16 };
+E2EDKA1_OB_SEGNUM   :  STRINGA { LENGTH =  6 };
+E2EDKA1_OB_PSGNUM   :  STRINGA { LENGTH =  6 };
+E2EDKA1_OB_HLEVEL   :  STRINGA { LENGTH =  2 };
+E2EDKA1_OB_PARVW    :  STRINGA { LENGTH =  3, DEFAULT = "OB " };
+E2EDKA1_OB_PARTN    :  STRINGA { LENGTH = 17 };
+E2EDKA1_OB_LIFNR    :  STRINGA { LENGTH = 17 };
+E2EDKA1_OB_NAME1    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OB_NAME2    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OB_NAME3    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OB_NAME4    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OB_STRAS    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OB_STRS2    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OB_PFACH    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OB_ORT01    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OB_COUNC    :  STRINGA { LENGTH =  9 };
+E2EDKA1_OB_PSTLZ    :  STRINGA { LENGTH =  9 };
+E2EDKA1_OB_PSTL2    :  STRINGA { LENGTH =  9 };
+E2EDKA1_OB_LAND1    :  STRINGA { LENGTH =  3 };
+E2EDKA1_OB_ABLAD    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OB_PERNR    :  STRINGA { LENGTH = 30 };
+E2EDKA1_OB_PARNR    :  STRINGA { LENGTH = 30 };
+E2EDKA1_OB_TELF1    :  STRINGA { LENGTH = 25 };
+E2EDKA1_OB_TELF2    :  STRINGA { LENGTH = 25 };
+E2EDKA1_OB_TELBX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_OB_TELFX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_OB_TELTX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_OB_TELX1    :  STRINGA { LENGTH = 25 };
+E2EDKA1_OB_SPRAS    :  STRINGA { LENGTH =  1 };
+E2EDKA1_OB_ANRED    :  STRINGA { LENGTH = 15 };
+E2EDKA1_OB_ORT02    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OB_HAUSN    :  STRINGA { LENGTH =  6 };
+E2EDKA1_OB_STOCK    :  STRINGA { LENGTH =  6 };
+E2EDKA1_OB_REGIO    :  STRINGA { LENGTH =  3 };
+E2EDKA1_OB_PARGE    :  STRINGA { LENGTH =  1 };
+E2EDKA1_OB_ISOAL    :  STRINGA { LENGTH =  2 };
+E2EDKA1_OB_ISONU    :  STRINGA { LENGTH =  2 };
+E2EDKA1_OB_FCODE    :  STRINGA { LENGTH = 20 };
+E2EDKA1_OB_IHREZ    :  STRINGA { LENGTH = 30 };
+E2EDKA1_OB_BNAME    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OB_PAORG    :  STRINGA { LENGTH = 30 };
+E2EDKA1_OB_ORGTX    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OB_PAGRU    :  STRINGA { LENGTH = 30 };
+E2EDKA1_OB_KNREF    :  STRINGA { LENGTH = 30 };
+E2EDKA1_OB_ILNNR    :  STRINGA { LENGTH = 70 };
+E2EDKA1_OB_PFORT    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OB_SPRAS_ISO:  STRINGA { LENGTH =  2 };
+E2EDKA1_OB_TITLE    :  STRINGA { LENGTH = 15 };
+
+#---------------------------------------------------------------------------------------------------------------#
+#       E2EDKA1003_OMI                                                                                          #
+#---------------------------------------------------------------------------------------------------------------#
+
+E2EDKA1_OMI { DELIMITER = "\x0a" }:
+        E2EDKA1_OMI_SEGNAM              # Segment (externer Name)
+        E2EDKA1_OMI_SEGNAM2             # Segment (externer Name)
+        E2EDKA1_OMI_SEGNAM3             # Segment (externer Name)
+        E2EDKA1_OMI_MANDT               # Mandant
+        E2EDKA1_OMI_DOCNUM              # Nummer des IDocs
+        E2EDKA1_OMI_SEGNUM              # Segmentnummer
+        E2EDKA1_OMI_PSGNUM              # Nummer des übergeordneten Elternsegments
+        E2EDKA1_OMI_HLEVEL              # Hierarchieebene des SAP-Segmentes
+        E2EDKA1_OMI_PARVW               # Partnerrolle (z.B. Auftraggeber, Warenempfänger, ...)
+        E2EDKA1_OMI_PARTN               # Partnernummer
+        E2EDKA1_OMI_LIFNR               # Lieferantennummer beim Kunden
+        E2EDKA1_OMI_NAME1               # Name 1
+        E2EDKA1_OMI_NAME2               # Name 2
+        E2EDKA1_OMI_NAME3               # Name 3
+        E2EDKA1_OMI_NAME4               # Name 4
+        E2EDKA1_OMI_STRAS               # Straße und Hausnummer 1
+        E2EDKA1_OMI_STRS2               # Straße und Hausnummer 2
+        E2EDKA1_OMI_PFACH               # Postfach
+        E2EDKA1_OMI_ORT01               # Ort
+        E2EDKA1_OMI_COUNC               # County code
+        E2EDKA1_OMI_PSTLZ               # Postleitzahl
+        E2EDKA1_OMI_PSTL2               # Postleitzahl des Postfachs
+        E2EDKA1_OMI_LAND1               # Länderschlüssel
+        E2EDKA1_OMI_ABLAD               # Abladestelle
+        E2EDKA1_OMI_PERNR               # Personalnummer des Ansprechpartners
+        E2EDKA1_OMI_PARNR               # Ansprechpartnernummer (nicht Personalnummer)
+        E2EDKA1_OMI_TELF1               # Telefonnummer 1 des Ansprechpartners
+        E2EDKA1_OMI_TELF2               # Telefonnummer 2 des Ansprechpartners
+        E2EDKA1_OMI_TELBX               # Teleboxnummer
+        E2EDKA1_OMI_TELFX               # Telefaxnummer
+        E2EDKA1_OMI_TELTX               # Teletexnummer
+        E2EDKA1_OMI_TELX1               # Telexnummer
+        E2EDKA1_OMI_SPRAS               # Sprachenschlüssel
+        E2EDKA1_OMI_ANRED               # Anrede
+        E2EDKA1_OMI_ORT02               # Ortsteil
+        E2EDKA1_OMI_HAUSN               # Hausnummer
+        E2EDKA1_OMI_STOCK               # Stockwerk
+        E2EDKA1_OMI_REGIO               # Region
+        E2EDKA1_OMI_PARGE               # Geschlecht des Partners
+        E2EDKA1_OMI_ISOAL               # ISO-Code des Landes
+        E2EDKA1_OMI_ISONU               # ISO-Code des Landes
+        E2EDKA1_OMI_FCODE               # Firmencode Frankreich
+        E2EDKA1_OMI_IHREZ               # Ihr Zeichen (vom Partner)
+        E2EDKA1_OMI_BNAME               # IDOC Benutzername
+        E2EDKA1_OMI_PAORG               # IDOC Organisationscode
+        E2EDKA1_OMI_ORGTX               # IDOC Organisationscode
+        E2EDKA1_OMI_PAGRU               # IDOC Gruppencode
+        E2EDKA1_OMI_KNREF               # Kundenindividuelle Bez. des Geschäftspartners (Werk, Lager)
+        E2EDKA1_OMI_ILNNR               # Characterfeld der Länge 70
+        E2EDKA1_OMI_PFORT               # Ort des Postfachs
+        E2EDKA1_OMI_SPRAS_ISO           # Sprache nach ISO 639
+        E2EDKA1_OMI_TITLE               # Anrede
+        REST*;
+
+E2EDKA1_OMI_SEGNAM   :  STRINGA { LENGTH =  7, DEFAULT = "E2EDKA1" };
+E2EDKA1_OMI_SEGNAM2  :  STRINGA { LENGTH =  3, DEFAULT = "003" };
+E2EDKA1_OMI_SEGNAM3  :  STRINGA { LENGTH = 20 };
+E2EDKA1_OMI_MANDT    :  STRINGA { LENGTH =  3 };
+E2EDKA1_OMI_DOCNUM   :  STRINGA { LENGTH = 16 };
+E2EDKA1_OMI_SEGNUM   :  STRINGA { LENGTH =  6 };
+E2EDKA1_OMI_PSGNUM   :  STRINGA { LENGTH =  6 };
+E2EDKA1_OMI_HLEVEL   :  STRINGA { LENGTH =  2 };
+E2EDKA1_OMI_PARVW    :  STRINGA { LENGTH =  3, DEFAULT = "OMI" };
+E2EDKA1_OMI_PARTN    :  STRINGA { LENGTH = 17 };
+E2EDKA1_OMI_LIFNR    :  STRINGA { LENGTH = 17 };
+E2EDKA1_OMI_NAME1    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OMI_NAME2    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OMI_NAME3    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OMI_NAME4    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OMI_STRAS    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OMI_STRS2    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OMI_PFACH    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OMI_ORT01    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OMI_COUNC    :  STRINGA { LENGTH =  9 };
+E2EDKA1_OMI_PSTLZ    :  STRINGA { LENGTH =  9 };
+E2EDKA1_OMI_PSTL2    :  STRINGA { LENGTH =  9 };
+E2EDKA1_OMI_LAND1    :  STRINGA { LENGTH =  3 };
+E2EDKA1_OMI_ABLAD    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OMI_PERNR    :  STRINGA { LENGTH = 30 };
+E2EDKA1_OMI_PARNR    :  STRINGA { LENGTH = 30 };
+E2EDKA1_OMI_TELF1    :  STRINGA { LENGTH = 25 };
+E2EDKA1_OMI_TELF2    :  STRINGA { LENGTH = 25 };
+E2EDKA1_OMI_TELBX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_OMI_TELFX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_OMI_TELTX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_OMI_TELX1    :  STRINGA { LENGTH = 25 };
+E2EDKA1_OMI_SPRAS    :  STRINGA { LENGTH =  1 };
+E2EDKA1_OMI_ANRED    :  STRINGA { LENGTH = 15 };
+E2EDKA1_OMI_ORT02    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OMI_HAUSN    :  STRINGA { LENGTH =  6 };
+E2EDKA1_OMI_STOCK    :  STRINGA { LENGTH =  6 };
+E2EDKA1_OMI_REGIO    :  STRINGA { LENGTH =  3 };
+E2EDKA1_OMI_PARGE    :  STRINGA { LENGTH =  1 };
+E2EDKA1_OMI_ISOAL    :  STRINGA { LENGTH =  2 };
+E2EDKA1_OMI_ISONU    :  STRINGA { LENGTH =  2 };
+E2EDKA1_OMI_FCODE    :  STRINGA { LENGTH = 20 };
+E2EDKA1_OMI_IHREZ    :  STRINGA { LENGTH = 30 };
+E2EDKA1_OMI_BNAME    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OMI_PAORG    :  STRINGA { LENGTH = 30 };
+E2EDKA1_OMI_ORGTX    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OMI_PAGRU    :  STRINGA { LENGTH = 30 };
+E2EDKA1_OMI_KNREF    :  STRINGA { LENGTH = 30 };
+E2EDKA1_OMI_ILNNR    :  STRINGA { LENGTH = 70 };
+E2EDKA1_OMI_PFORT    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OMI_SPRAS_ISO:  STRINGA { LENGTH =  2 };
+E2EDKA1_OMI_TITLE    :  STRINGA { LENGTH = 15 };
+
+#---------------------------------------------------------------------------------------------------------------#
+#       E2EDKA1003_OPB                                                                                          #
+#---------------------------------------------------------------------------------------------------------------#
+
+E2EDKA1_OPB { DELIMITER = "\x0a" }:
+        E2EDKA1_OPB_SEGNAM              # Segment (externer Name)
+        E2EDKA1_OPB_SEGNAM2             # Segment (externer Name)
+        E2EDKA1_OPB_SEGNAM3             # Segment (externer Name)
+        E2EDKA1_OPB_MANDT               # Mandant
+        E2EDKA1_OPB_DOCNUM              # Nummer des IDocs
+        E2EDKA1_OPB_SEGNUM              # Segmentnummer
+        E2EDKA1_OPB_PSGNUM              # Nummer des übergeordneten Elternsegments
+        E2EDKA1_OPB_HLEVEL              # Hierarchieebene des SAP-Segmentes
+        E2EDKA1_OPB_PARVW               # Partnerrolle (z.B. Auftraggeber, Warenempfänger, ...)
+        E2EDKA1_OPB_PARTN               # Partnernummer
+        E2EDKA1_OPB_LIFNR               # Lieferantennummer beim Kunden
+        E2EDKA1_OPB_NAME1               # Name 1
+        E2EDKA1_OPB_NAME2               # Name 2
+        E2EDKA1_OPB_NAME3               # Name 3
+        E2EDKA1_OPB_NAME4               # Name 4
+        E2EDKA1_OPB_STRAS               # Straße und Hausnummer 1
+        E2EDKA1_OPB_STRS2               # Straße und Hausnummer 2
+        E2EDKA1_OPB_PFACH               # Postfach
+        E2EDKA1_OPB_ORT01               # Ort
+        E2EDKA1_OPB_COUNC               # County code
+        E2EDKA1_OPB_PSTLZ               # Postleitzahl
+        E2EDKA1_OPB_PSTL2               # Postleitzahl des Postfachs
+        E2EDKA1_OPB_LAND1               # Länderschlüssel
+        E2EDKA1_OPB_ABLAD               # Abladestelle
+        E2EDKA1_OPB_PERNR               # Personalnummer des Ansprechpartners
+        E2EDKA1_OPB_PARNR               # Ansprechpartnernummer (nicht Personalnummer)
+        E2EDKA1_OPB_TELF1               # Telefonnummer 1 des Ansprechpartners
+        E2EDKA1_OPB_TELF2               # Telefonnummer 2 des Ansprechpartners
+        E2EDKA1_OPB_TELBX               # Teleboxnummer
+        E2EDKA1_OPB_TELFX               # Telefaxnummer
+        E2EDKA1_OPB_TELTX               # Teletexnummer
+        E2EDKA1_OPB_TELX1               # Telexnummer
+        E2EDKA1_OPB_SPRAS               # Sprachenschlüssel
+        E2EDKA1_OPB_ANRED               # Anrede
+        E2EDKA1_OPB_ORT02               # Ortsteil
+        E2EDKA1_OPB_HAUSN               # Hausnummer
+        E2EDKA1_OPB_STOCK               # Stockwerk
+        E2EDKA1_OPB_REGIO               # Region
+        E2EDKA1_OPB_PARGE               # Geschlecht des Partners
+        E2EDKA1_OPB_ISOAL               # ISO-Code des Landes
+        E2EDKA1_OPB_ISONU               # ISO-Code des Landes
+        E2EDKA1_OPB_FCODE               # Firmencode Frankreich
+        E2EDKA1_OPB_IHREZ               # Ihr Zeichen (vom Partner)
+        E2EDKA1_OPB_BNAME               # IDOC Benutzername
+        E2EDKA1_OPB_PAORG               # IDOC Organisationscode
+        E2EDKA1_OPB_ORGTX               # IDOC Organisationscode
+        E2EDKA1_OPB_PAGRU               # IDOC Gruppencode
+        E2EDKA1_OPB_KNREF               # Kundenindividuelle Bez. des Geschäftspartners (Werk, Lager)
+        E2EDKA1_OPB_ILNNR               # Characterfeld der Länge 70
+        E2EDKA1_OPB_PFORT               # Ort des Postfachs
+        E2EDKA1_OPB_SPRAS_ISO           # Sprache nach ISO 639
+        E2EDKA1_OPB_TITLE               # Anrede
+        REST*;
+
+E2EDKA1_OPB_SEGNAM   :  STRINGA { LENGTH =  7, DEFAULT = "E2EDKA1" };
+E2EDKA1_OPB_SEGNAM2  :  STRINGA { LENGTH =  3, DEFAULT = "003" };
+E2EDKA1_OPB_SEGNAM3  :  STRINGA { LENGTH = 20 };
+E2EDKA1_OPB_MANDT    :  STRINGA { LENGTH =  3 };
+E2EDKA1_OPB_DOCNUM   :  STRINGA { LENGTH = 16 };
+E2EDKA1_OPB_SEGNUM   :  STRINGA { LENGTH =  6 };
+E2EDKA1_OPB_PSGNUM   :  STRINGA { LENGTH =  6 };
+E2EDKA1_OPB_HLEVEL   :  STRINGA { LENGTH =  2 };
+E2EDKA1_OPB_PARVW    :  STRINGA { LENGTH =  3, DEFAULT = "OPB" };
+E2EDKA1_OPB_PARTN    :  STRINGA { LENGTH = 17 };
+E2EDKA1_OPB_LIFNR    :  STRINGA { LENGTH = 17 };
+E2EDKA1_OPB_NAME1    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OPB_NAME2    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OPB_NAME3    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OPB_NAME4    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OPB_STRAS    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OPB_STRS2    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OPB_PFACH    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OPB_ORT01    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OPB_COUNC    :  STRINGA { LENGTH =  9 };
+E2EDKA1_OPB_PSTLZ    :  STRINGA { LENGTH =  9 };
+E2EDKA1_OPB_PSTL2    :  STRINGA { LENGTH =  9 };
+E2EDKA1_OPB_LAND1    :  STRINGA { LENGTH =  3 };
+E2EDKA1_OPB_ABLAD    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OPB_PERNR    :  STRINGA { LENGTH = 30 };
+E2EDKA1_OPB_PARNR    :  STRINGA { LENGTH = 30 };
+E2EDKA1_OPB_TELF1    :  STRINGA { LENGTH = 25 };
+E2EDKA1_OPB_TELF2    :  STRINGA { LENGTH = 25 };
+E2EDKA1_OPB_TELBX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_OPB_TELFX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_OPB_TELTX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_OPB_TELX1    :  STRINGA { LENGTH = 25 };
+E2EDKA1_OPB_SPRAS    :  STRINGA { LENGTH =  1 };
+E2EDKA1_OPB_ANRED    :  STRINGA { LENGTH = 15 };
+E2EDKA1_OPB_ORT02    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OPB_HAUSN    :  STRINGA { LENGTH =  6 };
+E2EDKA1_OPB_STOCK    :  STRINGA { LENGTH =  6 };
+E2EDKA1_OPB_REGIO    :  STRINGA { LENGTH =  3 };
+E2EDKA1_OPB_PARGE    :  STRINGA { LENGTH =  1 };
+E2EDKA1_OPB_ISOAL    :  STRINGA { LENGTH =  2 };
+E2EDKA1_OPB_ISONU    :  STRINGA { LENGTH =  2 };
+E2EDKA1_OPB_FCODE    :  STRINGA { LENGTH = 20 };
+E2EDKA1_OPB_IHREZ    :  STRINGA { LENGTH = 30 };
+E2EDKA1_OPB_BNAME    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OPB_PAORG    :  STRINGA { LENGTH = 30 };
+E2EDKA1_OPB_ORGTX    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OPB_PAGRU    :  STRINGA { LENGTH = 30 };
+E2EDKA1_OPB_KNREF    :  STRINGA { LENGTH = 30 };
+E2EDKA1_OPB_ILNNR    :  STRINGA { LENGTH = 70 };
+E2EDKA1_OPB_PFORT    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OPB_SPRAS_ISO:  STRINGA { LENGTH =  2 };
+E2EDKA1_OPB_TITLE    :  STRINGA { LENGTH = 15 };
+
+#---------------------------------------------------------------------------------------------------------------#
+#       E2EDKA1003_OSF                                                                                          #
+#---------------------------------------------------------------------------------------------------------------#
+
+E2EDKA1_OSF { DELIMITER = "\x0a" }:
+        E2EDKA1_OSF_SEGNAM              # Segment (externer Name)
+        E2EDKA1_OSF_SEGNAM2             # Segment (externer Name)
+        E2EDKA1_OSF_SEGNAM3             # Segment (externer Name)
+        E2EDKA1_OSF_MANDT               # Mandant
+        E2EDKA1_OSF_DOCNUM              # Nummer des IDocs
+        E2EDKA1_OSF_SEGNUM              # Segmentnummer
+        E2EDKA1_OSF_PSGNUM              # Nummer des übergeordneten Elternsegments
+        E2EDKA1_OSF_HLEVEL              # Hierarchieebene des SAP-Segmentes
+        E2EDKA1_OSF_PARVW               # Partnerrolle (z.B. Auftraggeber, Warenempfänger, ...)
+        E2EDKA1_OSF_PARTN               # Partnernummer
+        E2EDKA1_OSF_LIFNR               # Lieferantennummer beim Kunden
+        E2EDKA1_OSF_NAME1               # Name 1
+        E2EDKA1_OSF_NAME2               # Name 2
+        E2EDKA1_OSF_NAME3               # Name 3
+        E2EDKA1_OSF_NAME4               # Name 4
+        E2EDKA1_OSF_STRAS               # Straße und Hausnummer 1
+        E2EDKA1_OSF_STRS2               # Straße und Hausnummer 2
+        E2EDKA1_OSF_PFACH               # Postfach
+        E2EDKA1_OSF_ORT01               # Ort
+        E2EDKA1_OSF_COUNC               # County code
+        E2EDKA1_OSF_PSTLZ               # Postleitzahl
+        E2EDKA1_OSF_PSTL2               # Postleitzahl des Postfachs
+        E2EDKA1_OSF_LAND1               # Länderschlüssel
+        E2EDKA1_OSF_ABLAD               # Abladestelle
+        E2EDKA1_OSF_PERNR               # Personalnummer des Ansprechpartners
+        E2EDKA1_OSF_PARNR               # Ansprechpartnernummer (nicht Personalnummer)
+        E2EDKA1_OSF_TELF1               # Telefonnummer 1 des Ansprechpartners
+        E2EDKA1_OSF_TELF2               # Telefonnummer 2 des Ansprechpartners
+        E2EDKA1_OSF_TELBX               # Teleboxnummer
+        E2EDKA1_OSF_TELFX               # Telefaxnummer
+        E2EDKA1_OSF_TELTX               # Teletexnummer
+        E2EDKA1_OSF_TELX1               # Telexnummer
+        E2EDKA1_OSF_SPRAS               # Sprachenschlüssel
+        E2EDKA1_OSF_ANRED               # Anrede
+        E2EDKA1_OSF_ORT02               # Ortsteil
+        E2EDKA1_OSF_HAUSN               # Hausnummer
+        E2EDKA1_OSF_STOCK               # Stockwerk
+        E2EDKA1_OSF_REGIO               # Region
+        E2EDKA1_OSF_PARGE               # Geschlecht des Partners
+        E2EDKA1_OSF_ISOAL               # ISO-Code des Landes
+        E2EDKA1_OSF_ISONU               # ISO-Code des Landes
+        E2EDKA1_OSF_FCODE               # Firmencode Frankreich
+        E2EDKA1_OSF_IHREZ               # Ihr Zeichen (vom Partner)
+        E2EDKA1_OSF_BNAME               # IDOC Benutzername
+        E2EDKA1_OSF_PAORG               # IDOC Organisationscode
+        E2EDKA1_OSF_ORGTX               # IDOC Organisationscode
+        E2EDKA1_OSF_PAGRU               # IDOC Gruppencode
+        E2EDKA1_OSF_KNREF               # Kundenindividuelle Bez. des Geschäftspartners (Werk, Lager)
+        E2EDKA1_OSF_ILNNR               # Characterfeld der Länge 70
+        E2EDKA1_OSF_PFORT               # Ort des Postfachs
+        E2EDKA1_OSF_SPRAS_ISO           # Sprache nach ISO 639
+        E2EDKA1_OSF_TITLE               # Anrede
+        REST*;
+
+E2EDKA1_OSF_SEGNAM   :  STRINGA { LENGTH =  7, DEFAULT = "E2EDKA1" };
+E2EDKA1_OSF_SEGNAM2  :  STRINGA { LENGTH =  3, DEFAULT = "003" };
+E2EDKA1_OSF_SEGNAM3  :  STRINGA { LENGTH = 20 };
+E2EDKA1_OSF_MANDT    :  STRINGA { LENGTH =  3 };
+E2EDKA1_OSF_DOCNUM   :  STRINGA { LENGTH = 16 };
+E2EDKA1_OSF_SEGNUM   :  STRINGA { LENGTH =  6 };
+E2EDKA1_OSF_PSGNUM   :  STRINGA { LENGTH =  6 };
+E2EDKA1_OSF_HLEVEL   :  STRINGA { LENGTH =  2 };
+E2EDKA1_OSF_PARVW    :  STRINGA { LENGTH =  3, DEFAULT = "OSF" };
+E2EDKA1_OSF_PARTN    :  STRINGA { LENGTH = 17 };
+E2EDKA1_OSF_LIFNR    :  STRINGA { LENGTH = 17 };
+E2EDKA1_OSF_NAME1    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OSF_NAME2    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OSF_NAME3    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OSF_NAME4    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OSF_STRAS    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OSF_STRS2    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OSF_PFACH    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OSF_ORT01    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OSF_COUNC    :  STRINGA { LENGTH =  9 };
+E2EDKA1_OSF_PSTLZ    :  STRINGA { LENGTH =  9 };
+E2EDKA1_OSF_PSTL2    :  STRINGA { LENGTH =  9 };
+E2EDKA1_OSF_LAND1    :  STRINGA { LENGTH =  3 };
+E2EDKA1_OSF_ABLAD    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OSF_PERNR    :  STRINGA { LENGTH = 30 };
+E2EDKA1_OSF_PARNR    :  STRINGA { LENGTH = 30 };
+E2EDKA1_OSF_TELF1    :  STRINGA { LENGTH = 25 };
+E2EDKA1_OSF_TELF2    :  STRINGA { LENGTH = 25 };
+E2EDKA1_OSF_TELBX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_OSF_TELFX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_OSF_TELTX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_OSF_TELX1    :  STRINGA { LENGTH = 25 };
+E2EDKA1_OSF_SPRAS    :  STRINGA { LENGTH =  1 };
+E2EDKA1_OSF_ANRED    :  STRINGA { LENGTH = 15 };
+E2EDKA1_OSF_ORT02    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OSF_HAUSN    :  STRINGA { LENGTH =  6 };
+E2EDKA1_OSF_STOCK    :  STRINGA { LENGTH =  6 };
+E2EDKA1_OSF_REGIO    :  STRINGA { LENGTH =  3 };
+E2EDKA1_OSF_PARGE    :  STRINGA { LENGTH =  1 };
+E2EDKA1_OSF_ISOAL    :  STRINGA { LENGTH =  2 };
+E2EDKA1_OSF_ISONU    :  STRINGA { LENGTH =  2 };
+E2EDKA1_OSF_FCODE    :  STRINGA { LENGTH = 20 };
+E2EDKA1_OSF_IHREZ    :  STRINGA { LENGTH = 30 };
+E2EDKA1_OSF_BNAME    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OSF_PAORG    :  STRINGA { LENGTH = 30 };
+E2EDKA1_OSF_ORGTX    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OSF_PAGRU    :  STRINGA { LENGTH = 30 };
+E2EDKA1_OSF_KNREF    :  STRINGA { LENGTH = 30 };
+E2EDKA1_OSF_ILNNR    :  STRINGA { LENGTH = 70 };
+E2EDKA1_OSF_PFORT    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OSF_SPRAS_ISO:  STRINGA { LENGTH =  2 };
+E2EDKA1_OSF_TITLE    :  STRINGA { LENGTH = 15 };
+
+#---------------------------------------------------------------------------------------------------------------#
+#       E2EDKA1003_OSU                                                                                          #
+#---------------------------------------------------------------------------------------------------------------#
+
+E2EDKA1_OSU { DELIMITER = "\x0a" }:
+        E2EDKA1_OSU_SEGNAM              # Segment (externer Name)
+        E2EDKA1_OSU_SEGNAM2             # Segment (externer Name)
+        E2EDKA1_OSU_SEGNAM3             # Segment (externer Name)
+        E2EDKA1_OSU_MANDT               # Mandant
+        E2EDKA1_OSU_DOCNUM              # Nummer des IDocs
+        E2EDKA1_OSU_SEGNUM              # Segmentnummer
+        E2EDKA1_OSU_PSGNUM              # Nummer des übergeordneten Elternsegments
+        E2EDKA1_OSU_HLEVEL              # Hierarchieebene des SAP-Segmentes
+        E2EDKA1_OSU_PARVW               # Partnerrolle (z.B. Auftraggeber, Warenempfänger, ...)
+        E2EDKA1_OSU_PARTN               # Partnernummer
+        E2EDKA1_OSU_LIFNR               # Lieferantennummer beim Kunden
+        E2EDKA1_OSU_NAME1               # Name 1
+        E2EDKA1_OSU_NAME2               # Name 2
+        E2EDKA1_OSU_NAME3               # Name 3
+        E2EDKA1_OSU_NAME4               # Name 4
+        E2EDKA1_OSU_STRAS               # Straße und Hausnummer 1
+        E2EDKA1_OSU_STRS2               # Straße und Hausnummer 2
+        E2EDKA1_OSU_PFACH               # Postfach
+        E2EDKA1_OSU_ORT01               # Ort
+        E2EDKA1_OSU_COUNC               # County code
+        E2EDKA1_OSU_PSTLZ               # Postleitzahl
+        E2EDKA1_OSU_PSTL2               # Postleitzahl des Postfachs
+        E2EDKA1_OSU_LAND1               # Länderschlüssel
+        E2EDKA1_OSU_ABLAD               # Abladestelle
+        E2EDKA1_OSU_PERNR               # Personalnummer des Ansprechpartners
+        E2EDKA1_OSU_PARNR               # Ansprechpartnernummer (nicht Personalnummer)
+        E2EDKA1_OSU_TELF1               # Telefonnummer 1 des Ansprechpartners
+        E2EDKA1_OSU_TELF2               # Telefonnummer 2 des Ansprechpartners
+        E2EDKA1_OSU_TELBX               # Teleboxnummer
+        E2EDKA1_OSU_TELFX               # Telefaxnummer
+        E2EDKA1_OSU_TELTX               # Teletexnummer
+        E2EDKA1_OSU_TELX1               # Telexnummer
+        E2EDKA1_OSU_SPRAS               # Sprachenschlüssel
+        E2EDKA1_OSU_ANRED               # Anrede
+        E2EDKA1_OSU_ORT02               # Ortsteil
+        E2EDKA1_OSU_HAUSN               # Hausnummer
+        E2EDKA1_OSU_STOCK               # Stockwerk
+        E2EDKA1_OSU_REGIO               # Region
+        E2EDKA1_OSU_PARGE               # Geschlecht des Partners
+        E2EDKA1_OSU_ISOAL               # ISO-Code des Landes
+        E2EDKA1_OSU_ISONU               # ISO-Code des Landes
+        E2EDKA1_OSU_FCODE               # Firmencode Frankreich
+        E2EDKA1_OSU_IHREZ               # Ihr Zeichen (vom Partner)
+        E2EDKA1_OSU_BNAME               # IDOC Benutzername
+        E2EDKA1_OSU_PAORG               # IDOC Organisationscode
+        E2EDKA1_OSU_ORGTX               # IDOC Organisationscode
+        E2EDKA1_OSU_PAGRU               # IDOC Gruppencode
+        E2EDKA1_OSU_KNREF               # Kundenindividuelle Bez. des Geschäftspartners (Werk, Lager)
+        E2EDKA1_OSU_ILNNR               # Characterfeld der Länge 70
+        E2EDKA1_OSU_PFORT               # Ort des Postfachs
+        E2EDKA1_OSU_SPRAS_ISO           # Sprache nach ISO 639
+        E2EDKA1_OSU_TITLE               # Anrede
+        REST*;
+
+E2EDKA1_OSU_SEGNAM   :  STRINGA { LENGTH =  7, DEFAULT = "E2EDKA1" };
+E2EDKA1_OSU_SEGNAM2  :  STRINGA { LENGTH =  3, DEFAULT = "003" };
+E2EDKA1_OSU_SEGNAM3  :  STRINGA { LENGTH = 20 };
+E2EDKA1_OSU_MANDT    :  STRINGA { LENGTH =  3 };
+E2EDKA1_OSU_DOCNUM   :  STRINGA { LENGTH = 16 };
+E2EDKA1_OSU_SEGNUM   :  STRINGA { LENGTH =  6 };
+E2EDKA1_OSU_PSGNUM   :  STRINGA { LENGTH =  6 };
+E2EDKA1_OSU_HLEVEL   :  STRINGA { LENGTH =  2 };
+E2EDKA1_OSU_PARVW    :  STRINGA { LENGTH =  3, DEFAULT = "OSU" };
+E2EDKA1_OSU_PARTN    :  STRINGA { LENGTH = 17 };
+E2EDKA1_OSU_LIFNR    :  STRINGA { LENGTH = 17 };
+E2EDKA1_OSU_NAME1    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OSU_NAME2    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OSU_NAME3    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OSU_NAME4    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OSU_STRAS    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OSU_STRS2    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OSU_PFACH    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OSU_ORT01    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OSU_COUNC    :  STRINGA { LENGTH =  9 };
+E2EDKA1_OSU_PSTLZ    :  STRINGA { LENGTH =  9 };
+E2EDKA1_OSU_PSTL2    :  STRINGA { LENGTH =  9 };
+E2EDKA1_OSU_LAND1    :  STRINGA { LENGTH =  3 };
+E2EDKA1_OSU_ABLAD    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OSU_PERNR    :  STRINGA { LENGTH = 30 };
+E2EDKA1_OSU_PARNR    :  STRINGA { LENGTH = 30 };
+E2EDKA1_OSU_TELF1    :  STRINGA { LENGTH = 25 };
+E2EDKA1_OSU_TELF2    :  STRINGA { LENGTH = 25 };
+E2EDKA1_OSU_TELBX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_OSU_TELFX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_OSU_TELTX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_OSU_TELX1    :  STRINGA { LENGTH = 25 };
+E2EDKA1_OSU_SPRAS    :  STRINGA { LENGTH =  1 };
+E2EDKA1_OSU_ANRED    :  STRINGA { LENGTH = 15 };
+E2EDKA1_OSU_ORT02    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OSU_HAUSN    :  STRINGA { LENGTH =  6 };
+E2EDKA1_OSU_STOCK    :  STRINGA { LENGTH =  6 };
+E2EDKA1_OSU_REGIO    :  STRINGA { LENGTH =  3 };
+E2EDKA1_OSU_PARGE    :  STRINGA { LENGTH =  1 };
+E2EDKA1_OSU_ISOAL    :  STRINGA { LENGTH =  2 };
+E2EDKA1_OSU_ISONU    :  STRINGA { LENGTH =  2 };
+E2EDKA1_OSU_FCODE    :  STRINGA { LENGTH = 20 };
+E2EDKA1_OSU_IHREZ    :  STRINGA { LENGTH = 30 };
+E2EDKA1_OSU_BNAME    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OSU_PAORG    :  STRINGA { LENGTH = 30 };
+E2EDKA1_OSU_ORGTX    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OSU_PAGRU    :  STRINGA { LENGTH = 30 };
+E2EDKA1_OSU_KNREF    :  STRINGA { LENGTH = 30 };
+E2EDKA1_OSU_ILNNR    :  STRINGA { LENGTH = 70 };
+E2EDKA1_OSU_PFORT    :  STRINGA { LENGTH = 35 };
+E2EDKA1_OSU_SPRAS_ISO:  STRINGA { LENGTH =  2 };
+E2EDKA1_OSU_TITLE    :  STRINGA { LENGTH = 15 };
+
+#---------------------------------------------------------------------------------------------------------------#
+#       E2EDKA1003_RE                                                                                           #
+#---------------------------------------------------------------------------------------------------------------#
+
+E2EDKA1_RE { DELIMITER = "\x0a" }:
+        E2EDKA1_RE_SEGNAM               # Segment (externer Name)
+        E2EDKA1_RE_SEGNAM2              # Segment (externer Name)
+        E2EDKA1_RE_SEGNAM3              # Segment (externer Name)
+        E2EDKA1_RE_MANDT                # Mandant
+        E2EDKA1_RE_DOCNUM               # Nummer des IDocs
+        E2EDKA1_RE_SEGNUM               # Segmentnummer
+        E2EDKA1_RE_PSGNUM               # Nummer des übergeordneten Elternsegments
+        E2EDKA1_RE_HLEVEL               # Hierarchieebene des SAP-Segmentes
+        E2EDKA1_RE_PARVW                # Partnerrolle (z.B. Auftraggeber, Warenempfänger, ...)
+        E2EDKA1_RE_PARTN                # Partnernummer
+        E2EDKA1_RE_LIFNR                # Lieferantennummer beim Kunden
+        E2EDKA1_RE_NAME1                # Name 1
+        E2EDKA1_RE_NAME2                # Name 2
+        E2EDKA1_RE_NAME3                # Name 3
+        E2EDKA1_RE_NAME4                # Name 4
+        E2EDKA1_RE_STRAS                # Straße und Hausnummer 1
+        E2EDKA1_RE_STRS2                # Straße und Hausnummer 2
+        E2EDKA1_RE_PFACH                # Postfach
+        E2EDKA1_RE_ORT01                # Ort
+        E2EDKA1_RE_COUNC                # County code
+        E2EDKA1_RE_PSTLZ                # Postleitzahl
+        E2EDKA1_RE_PSTL2                # Postleitzahl des Postfachs
+        E2EDKA1_RE_LAND1                # Länderschlüssel
+        E2EDKA1_RE_ABLAD                # Abladestelle
+        E2EDKA1_RE_PERNR                # Personalnummer des Ansprechpartners
+        E2EDKA1_RE_PARNR                # Ansprechpartnernummer (nicht Personalnummer)
+        E2EDKA1_RE_TELF1                # Telefonnummer 1 des Ansprechpartners
+        E2EDKA1_RE_TELF2                # Telefonnummer 2 des Ansprechpartners
+        E2EDKA1_RE_TELBX                # Teleboxnummer
+        E2EDKA1_RE_TELFX                # Telefaxnummer
+        E2EDKA1_RE_TELTX                # Teletexnummer
+        E2EDKA1_RE_TELX1                # Telexnummer
+        E2EDKA1_RE_SPRAS                # Sprachenschlüssel
+        E2EDKA1_RE_ANRED                # Anrede
+        E2EDKA1_RE_ORT02                # Ortsteil
+        E2EDKA1_RE_HAUSN                # Hausnummer
+        E2EDKA1_RE_STOCK                # Stockwerk
+        E2EDKA1_RE_REGIO                # Region
+        E2EDKA1_RE_PARGE                # Geschlecht des Partners
+        E2EDKA1_RE_ISOAL                # ISO-Code des Landes
+        E2EDKA1_RE_ISONU                # ISO-Code des Landes
+        E2EDKA1_RE_FCODE                # Firmencode Frankreich
+        E2EDKA1_RE_IHREZ                # Ihr Zeichen (vom Partner)
+        E2EDKA1_RE_BNAME                # IDOC Benutzername
+        E2EDKA1_RE_PAORG                # IDOC Organisationscode
+        E2EDKA1_RE_ORGTX                # IDOC Organisationscode
+        E2EDKA1_RE_PAGRU                # IDOC Gruppencode
+        E2EDKA1_RE_KNREF                # Kundenindividuelle Bez. des Geschäftspartners (Werk, Lager)
+        E2EDKA1_RE_ILNNR                # Characterfeld der Länge 70
+        E2EDKA1_RE_PFORT                # Ort des Postfachs
+        E2EDKA1_RE_SPRAS_ISO            # Sprache nach ISO 639
+        E2EDKA1_RE_TITLE                # Anrede
+        REST*;
+
+E2EDKA1_RE_SEGNAM   :  STRINGA { LENGTH =  7, DEFAULT = "E2EDKA1" };
+E2EDKA1_RE_SEGNAM2  :  STRINGA { LENGTH =  3, DEFAULT = "003" };
+E2EDKA1_RE_SEGNAM3  :  STRINGA { LENGTH = 20 };
+E2EDKA1_RE_MANDT    :  STRINGA { LENGTH =  3 };
+E2EDKA1_RE_DOCNUM   :  STRINGA { LENGTH = 16 };
+E2EDKA1_RE_SEGNUM   :  STRINGA { LENGTH =  6 };
+E2EDKA1_RE_PSGNUM   :  STRINGA { LENGTH =  6 };
+E2EDKA1_RE_HLEVEL   :  STRINGA { LENGTH =  2 };
+E2EDKA1_RE_PARVW    :  STRINGA { LENGTH =  3, DEFAULT = "RE " };
+E2EDKA1_RE_PARTN    :  STRINGA { LENGTH = 17 };
+E2EDKA1_RE_LIFNR    :  STRINGA { LENGTH = 17 };
+E2EDKA1_RE_NAME1    :  STRINGA { LENGTH = 35 };
+E2EDKA1_RE_NAME2    :  STRINGA { LENGTH = 35 };
+E2EDKA1_RE_NAME3    :  STRINGA { LENGTH = 35 };
+E2EDKA1_RE_NAME4    :  STRINGA { LENGTH = 35 };
+E2EDKA1_RE_STRAS    :  STRINGA { LENGTH = 35 };
+E2EDKA1_RE_STRS2    :  STRINGA { LENGTH = 35 };
+E2EDKA1_RE_PFACH    :  STRINGA { LENGTH = 35 };
+E2EDKA1_RE_ORT01    :  STRINGA { LENGTH = 35 };
+E2EDKA1_RE_COUNC    :  STRINGA { LENGTH =  9 };
+E2EDKA1_RE_PSTLZ    :  STRINGA { LENGTH =  9 };
+E2EDKA1_RE_PSTL2    :  STRINGA { LENGTH =  9 };
+E2EDKA1_RE_LAND1    :  STRINGA { LENGTH =  3 };
+E2EDKA1_RE_ABLAD    :  STRINGA { LENGTH = 35 };
+E2EDKA1_RE_PERNR    :  STRINGA { LENGTH = 30 };
+E2EDKA1_RE_PARNR    :  STRINGA { LENGTH = 30 };
+E2EDKA1_RE_TELF1    :  STRINGA { LENGTH = 25 };
+E2EDKA1_RE_TELF2    :  STRINGA { LENGTH = 25 };
+E2EDKA1_RE_TELBX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_RE_TELFX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_RE_TELTX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_RE_TELX1    :  STRINGA { LENGTH = 25 };
+E2EDKA1_RE_SPRAS    :  STRINGA { LENGTH =  1 };
+E2EDKA1_RE_ANRED    :  STRINGA { LENGTH = 15 };
+E2EDKA1_RE_ORT02    :  STRINGA { LENGTH = 35 };
+E2EDKA1_RE_HAUSN    :  STRINGA { LENGTH =  6 };
+E2EDKA1_RE_STOCK    :  STRINGA { LENGTH =  6 };
+E2EDKA1_RE_REGIO    :  STRINGA { LENGTH =  3 };
+E2EDKA1_RE_PARGE    :  STRINGA { LENGTH =  1 };
+E2EDKA1_RE_ISOAL    :  STRINGA { LENGTH =  2 };
+E2EDKA1_RE_ISONU    :  STRINGA { LENGTH =  2 };
+E2EDKA1_RE_FCODE    :  STRINGA { LENGTH = 20 };
+E2EDKA1_RE_IHREZ    :  STRINGA { LENGTH = 30 };
+E2EDKA1_RE_BNAME    :  STRINGA { LENGTH = 35 };
+E2EDKA1_RE_PAORG    :  STRINGA { LENGTH = 30 };
+E2EDKA1_RE_ORGTX    :  STRINGA { LENGTH = 35 };
+E2EDKA1_RE_PAGRU    :  STRINGA { LENGTH = 30 };
+E2EDKA1_RE_KNREF    :  STRINGA { LENGTH = 30 };
+E2EDKA1_RE_ILNNR    :  STRINGA { LENGTH = 70 };
+E2EDKA1_RE_PFORT    :  STRINGA { LENGTH = 35 };
+E2EDKA1_RE_SPRAS_ISO:  STRINGA { LENGTH =  2 };
+E2EDKA1_RE_TITLE    :  STRINGA { LENGTH = 15 };
+
+#---------------------------------------------------------------------------------------------------------------#
+#       E2EDKA1003_WE                                                                                           #
+#---------------------------------------------------------------------------------------------------------------#
+
+E2EDKA1_WE { DELIMITER = "\x0a" }:
+        E2EDKA1_WE_SEGNAM               # Segment (externer Name)
+        E2EDKA1_WE_SEGNAM2              # Segment (externer Name)
+        E2EDKA1_WE_SEGNAM3              # Segment (externer Name)
+        E2EDKA1_WE_MANDT                # Mandant
+        E2EDKA1_WE_DOCNUM               # Nummer des IDocs
+        E2EDKA1_WE_SEGNUM               # Segmentnummer
+        E2EDKA1_WE_PSGNUM               # Nummer des übergeordneten Elternsegments
+        E2EDKA1_WE_HLEVEL               # Hierarchieebene des SAP-Segmentes
+        E2EDKA1_WE_PARVW                # Partnerrolle (z.B. Auftraggeber, Warenempfänger, ...)
+        E2EDKA1_WE_PARTN                # Partnernummer
+        E2EDKA1_WE_LIFNR                # Lieferantennummer beim Kunden
+        E2EDKA1_WE_NAME1                # Name 1
+        E2EDKA1_WE_NAME2                # Name 2
+        E2EDKA1_WE_NAME3                # Name 3
+        E2EDKA1_WE_NAME4                # Name 4
+        E2EDKA1_WE_STRAS                # Straße und Hausnummer 1
+        E2EDKA1_WE_STRS2                # Straße und Hausnummer 2
+        E2EDKA1_WE_PFACH                # Postfach
+        E2EDKA1_WE_ORT01                # Ort
+        E2EDKA1_WE_COUNC                # County code
+        E2EDKA1_WE_PSTLZ                # Postleitzahl
+        E2EDKA1_WE_PSTL2                # Postleitzahl des Postfachs
+        E2EDKA1_WE_LAND1                # Länderschlüssel
+        E2EDKA1_WE_ABLAD                # Abladestelle
+        E2EDKA1_WE_PERNR                # Personalnummer des Ansprechpartners
+        E2EDKA1_WE_PARNR                # Ansprechpartnernummer (nicht Personalnummer)
+        E2EDKA1_WE_TELF1                # Telefonnummer 1 des Ansprechpartners
+        E2EDKA1_WE_TELF2                # Telefonnummer 2 des Ansprechpartners
+        E2EDKA1_WE_TELBX                # Teleboxnummer
+        E2EDKA1_WE_TELFX                # Telefaxnummer
+        E2EDKA1_WE_TELTX                # Teletexnummer
+        E2EDKA1_WE_TELX1                # Telexnummer
+        E2EDKA1_WE_SPRAS                # Sprachenschlüssel
+        E2EDKA1_WE_ANRED                # Anrede
+        E2EDKA1_WE_ORT02                # Ortsteil
+        E2EDKA1_WE_HAUSN                # Hausnummer
+        E2EDKA1_WE_STOCK                # Stockwerk
+        E2EDKA1_WE_REGIO                # Region
+        E2EDKA1_WE_PARGE                # Geschlecht des Partners
+        E2EDKA1_WE_ISOAL                # ISO-Code des Landes
+        E2EDKA1_WE_ISONU                # ISO-Code des Landes
+        E2EDKA1_WE_FCODE                # Firmencode Frankreich
+        E2EDKA1_WE_IHREZ                # Ihr Zeichen (vom Partner)
+        E2EDKA1_WE_BNAME                # IDOC Benutzername
+        E2EDKA1_WE_PAORG                # IDOC Organisationscode
+        E2EDKA1_WE_ORGTX                # IDOC Organisationscode
+        E2EDKA1_WE_PAGRU                # IDOC Gruppencode
+        E2EDKA1_WE_KNREF                # Kundenindividuelle Bez. des Geschäftspartners (Werk, Lager)
+        E2EDKA1_WE_ILNNR                # Characterfeld der Länge 70
+        E2EDKA1_WE_PFORT                # Ort des Postfachs
+        E2EDKA1_WE_SPRAS_ISO            # Sprache nach ISO 639
+        E2EDKA1_WE_TITLE                # Anrede
+        REST*;
+
+E2EDKA1_WE_SEGNAM   :  STRINGA { LENGTH =  7, DEFAULT = "E2EDKA1" };
+E2EDKA1_WE_SEGNAM2  :  STRINGA { LENGTH =  3, DEFAULT = "003" };
+E2EDKA1_WE_SEGNAM3  :  STRINGA { LENGTH = 20 };
+E2EDKA1_WE_MANDT    :  STRINGA { LENGTH =  3 };
+E2EDKA1_WE_DOCNUM   :  STRINGA { LENGTH = 16 };
+E2EDKA1_WE_SEGNUM   :  STRINGA { LENGTH =  6 };
+E2EDKA1_WE_PSGNUM   :  STRINGA { LENGTH =  6 };
+E2EDKA1_WE_HLEVEL   :  STRINGA { LENGTH =  2 };
+E2EDKA1_WE_PARVW    :  STRINGA { LENGTH =  3, DEFAULT = "WE " };
+E2EDKA1_WE_PARTN    :  STRINGA { LENGTH = 17 };
+E2EDKA1_WE_LIFNR    :  STRINGA { LENGTH = 17 };
+E2EDKA1_WE_NAME1    :  STRINGA { LENGTH = 35 };
+E2EDKA1_WE_NAME2    :  STRINGA { LENGTH = 35 };
+E2EDKA1_WE_NAME3    :  STRINGA { LENGTH = 35 };
+E2EDKA1_WE_NAME4    :  STRINGA { LENGTH = 35 };
+E2EDKA1_WE_STRAS    :  STRINGA { LENGTH = 35 };
+E2EDKA1_WE_STRS2    :  STRINGA { LENGTH = 35 };
+E2EDKA1_WE_PFACH    :  STRINGA { LENGTH = 35 };
+E2EDKA1_WE_ORT01    :  STRINGA { LENGTH = 35 };
+E2EDKA1_WE_COUNC    :  STRINGA { LENGTH =  9 };
+E2EDKA1_WE_PSTLZ    :  STRINGA { LENGTH =  9 };
+E2EDKA1_WE_PSTL2    :  STRINGA { LENGTH =  9 };
+E2EDKA1_WE_LAND1    :  STRINGA { LENGTH =  3 };
+E2EDKA1_WE_ABLAD    :  STRINGA { LENGTH = 35 };
+E2EDKA1_WE_PERNR    :  STRINGA { LENGTH = 30 };
+E2EDKA1_WE_PARNR    :  STRINGA { LENGTH = 30 };
+E2EDKA1_WE_TELF1    :  STRINGA { LENGTH = 25 };
+E2EDKA1_WE_TELF2    :  STRINGA { LENGTH = 25 };
+E2EDKA1_WE_TELBX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_WE_TELFX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_WE_TELTX    :  STRINGA { LENGTH = 25 };
+E2EDKA1_WE_TELX1    :  STRINGA { LENGTH = 25 };
+E2EDKA1_WE_SPRAS    :  STRINGA { LENGTH =  1 };
+E2EDKA1_WE_ANRED    :  STRINGA { LENGTH = 15 };
+E2EDKA1_WE_ORT02    :  STRINGA { LENGTH = 35 };
+E2EDKA1_WE_HAUSN    :  STRINGA { LENGTH =  6 };
+E2EDKA1_WE_STOCK    :  STRINGA { LENGTH =  6 };
+E2EDKA1_WE_REGIO    :  STRINGA { LENGTH =  3 };
+E2EDKA1_WE_PARGE    :  STRINGA { LENGTH =  1 };
+E2EDKA1_WE_ISOAL    :  STRINGA { LENGTH =  2 };
+E2EDKA1_WE_ISONU    :  STRINGA { LENGTH =  2 };
+E2EDKA1_WE_FCODE    :  STRINGA { LENGTH = 20 };
+E2EDKA1_WE_IHREZ    :  STRINGA { LENGTH = 30 };
+E2EDKA1_WE_BNAME    :  STRINGA { LENGTH = 35 };
+E2EDKA1_WE_PAORG    :  STRINGA { LENGTH = 30 };
+E2EDKA1_WE_ORGTX    :  STRINGA { LENGTH = 35 };
+E2EDKA1_WE_PAGRU    :  STRINGA { LENGTH = 30 };
+E2EDKA1_WE_KNREF    :  STRINGA { LENGTH = 30 };
+E2EDKA1_WE_ILNNR    :  STRINGA { LENGTH = 70 };
+E2EDKA1_WE_PFORT    :  STRINGA { LENGTH = 35 };
+E2EDKA1_WE_SPRAS_ISO:  STRINGA { LENGTH =  2 };
+E2EDKA1_WE_TITLE    :  STRINGA { LENGTH = 15 };
+
+#---------------------------------------------------------------------------------------------------------------#
+#       E2EDP10001                                                                                              #
+#---------------------------------------------------------------------------------------------------------------#
+
+E2EDP10 { DELIMITER = "\x0a" }:
+        E2EDP10_SEGNAM                  # Segment (externer Name)
+        E2EDP10_SEGNAM2                 # Segment (externer Name)
+        E2EDP10_SEGNAM3                 # Segment (externer Name)
+        E2EDP10_MANDT                   # Mandant
+        E2EDP10_DOCNUM                  # Nummer des IDocs
+        E2EDP10_SEGNUM                  # Segmentnummer
+        E2EDP10_PSGNUM                  # Nummer des übergeordneten Elternsegments
+        E2EDP10_HLEVEL                  # Hierarchieebene des SAP-Segmentes
+        E2EDP10_IDNKD                   # Materialnummer des Kunden
+        E2EDP10_ARKTX                   # Artikelkurztext EDI
+        E2EDP10_VRKME                   # Feld der Laenge 3 Bytes
+        E2EDP10_KWERK                   # Werk des Kunden
+        E2EDP10_KLGOR                   # DFÜ-Lagerort des Kunden
+        E2EDP10_DFABL                   # Abladestelle des Kunden
+        E2EDP10_VBRST                   # Verbrauchsstelle des Kunden
+        E2EDP10_BELNR                   # Lieferscheinnummer letzter Eingang EDI
+        E2EDP10_LFIMG                   # Lieferscheinmenge letzte Einteilung EDI
+        E2EDP10_VEMNG                   # Vereinnahmte Menge letzte Einteilung
+        E2EDP10_LIDTL                   # Datum der letzten vom Kunden verbuchten Lieferung
+        E2EDP10_LIFST                   # Lieferstatus Schlüssel
+        E2EDP10_KRITB                   # Schlüssel kritischer Bestand
+        E2EDP10_ABHOR                   # Feinabrufhorizont
+        E2EDP10_ABDAT                   # Abstimmdatum für die Abstimmfortschrittszahl
+        E2EDP10_FZDIF                   # Fortschrittszahlendifferenz EDI
+        E2EDP10_AKUBM                   # Aktuelle kumulierte Bestellmenge
+        E2EDP10_AKUEM                   # Aktuelle kumulierte erhaltene Menge
+        E2EDP10_DESRE                   # Design Revisionsnummer
+        E2EDP10_ECHNO                   # Engineering Change Number
+        E2EDP10_ECHDT                   # Engineering Change Date
+        E2EDP10_ABFDE                   # Fertigungsfreigabe Ende
+        E2EDP10_MFADT                   # Fertigungsfreigabe kumulierter Bedarf
+        E2EDP10_ABMDE                   # Materialfreigabe Ende
+        E2EDP10_FPSDN                   # FPSD-Nummer
+        E2EDP10_LABKY                   # Lieferabruf-Schlüssel
+        E2EDP10_TSTKY                   # Teile-Status-Schlüssel
+        E2EDP10_DOKPF                   # Dokumentationspflicht von Prüfergebnissen
+        E2EDP10_KZAUS                   # Auslaufkennzeichen
+        E2EDP10_ABRAB                   # Abruf gültig ab
+        E2EDP10_ABRBI                   # Abruf gültig bis
+        E2EDP10_SCREL                   # Schedule Release
+        E2EDP10_NULDT                   # Nullstellungsdatum
+        E2EDP10_TEART                   # Kennzeichnung Versand- / Eintrefftermin
+        E2EDP10_SOLLFZ                  # Sollfortschrittszahl
+        E2EDP10_SOLLDT                  # Solldatum zur Sollfortschrittszahl
+        E2EDP10_IDNLF                   # Materialnummer des Lieferanten
+        E2EDP10_BSTDK                   # Bestelldatum des Kunden
+        E2EDP10_LABNK                   # Lieferabruf-/Feinabrufnummer des Kunden
+        E2EDP10_ABNRA                   # Lieferabruf-/Feinabrufnummer des Kunden
+        E2EDP10_ABNRD                   # Datum des Abrufs
+        E2EDP10_VTRNR                   # Vertragsnummer (Kontraktnummer)
+        E2EDP10_MFRFZ                   # Materialfreigabe kumulierter Bedarf
+        E2EDP10_POSEX                   # Positionsnummer der zugrundeliegenden Bestellung
+        REST*
+        ;
+
+E2EDP10_SEGNAM  :         STRINGA { LENGTH =  7, DEFAULT = "E2EDP10" };
+E2EDP10_SEGNAM2 :         STRINGA { LENGTH =  3, DEFAULT = "001" };
+E2EDP10_SEGNAM3 :         STRINGA { LENGTH = 20 };
+E2EDP10_MANDT   :         STRINGA { LENGTH =  3 };
+E2EDP10_DOCNUM  :         STRINGA { LENGTH = 16 };
+E2EDP10_SEGNUM  :         STRINGA { LENGTH =  6 };
+E2EDP10_PSGNUM  :         STRINGA { LENGTH =  6 };
+E2EDP10_HLEVEL  :         STRINGA { LENGTH =  2 };
+E2EDP10_IDNKD   :         STRINGA { LENGTH = 35 };
+E2EDP10_ARKTX   :         STRINGA { LENGTH = 35 };
+E2EDP10_VRKME   :         STRINGA { LENGTH =  3 };
+E2EDP10_KWERK   :         STRINGA { LENGTH = 20 };
+E2EDP10_KLGOR   :         STRINGA { LENGTH =  7 };
+E2EDP10_DFABL   :         STRINGA { LENGTH = 17 };
+E2EDP10_VBRST   :         STRINGA { LENGTH = 14 };
+E2EDP10_BELNR   :         STRINGA { LENGTH = 35 };
+E2EDP10_LFIMG   :         STRINGA { LENGTH = 15 };
+E2EDP10_VEMNG   :         STRINGA { LENGTH = 15 };
+E2EDP10_LIDTL   :         STRINGA { LENGTH =  8, PICTURE = "YYYYMMDD", DEFAULT = "        " };
+E2EDP10_LIFST   :         STRINGA { LENGTH =  1 };
+E2EDP10_KRITB   :         STRINGA { LENGTH =  1 };
+E2EDP10_ABHOR   :         STRINGA { LENGTH =  8, PICTURE = "YYYYMMDD", DEFAULT = "        " };
+E2EDP10_ABDAT   :         STRINGA { LENGTH =  8, PICTURE = "YYYYMMDD", DEFAULT = "        " };
+E2EDP10_FZDIF   :         STRINGA { LENGTH = 15 };
+E2EDP10_AKUBM   :         STRINGA { LENGTH = 15 };
+E2EDP10_AKUEM   :         STRINGA { LENGTH = 15 };
+E2EDP10_DESRE   :         STRINGA { LENGTH =  1 };
+E2EDP10_ECHNO   :         STRINGA { LENGTH =  1 };
+E2EDP10_ECHDT   :         STRINGA { LENGTH =  8, PICTURE = "YYYYMMDD", DEFAULT = "        " };
+E2EDP10_ABFDE   :         STRINGA { LENGTH =  8, PICTURE = "YYYYMMDD", DEFAULT = "        " };
+E2EDP10_MFADT   :         STRINGA { LENGTH = 15 };
+E2EDP10_ABMDE   :         STRINGA { LENGTH =  8, PICTURE = "YYYYMMDD", DEFAULT = "        " };
+E2EDP10_FPSDN   :         STRINGA { LENGTH = 22 };
+E2EDP10_LABKY   :         STRINGA { LENGTH =  1 };
+E2EDP10_TSTKY   :         STRINGA { LENGTH =  2 };
+E2EDP10_DOKPF   :         STRINGA { LENGTH =  1 };
+E2EDP10_KZAUS   :         STRINGA { LENGTH =  1 };
+E2EDP10_ABRAB   :         STRINGA { LENGTH =  8, PICTURE = "YYYYMMDD", DEFAULT = "        " };
+E2EDP10_ABRBI   :         STRINGA { LENGTH =  8, PICTURE = "YYYYMMDD", DEFAULT = "        " };
+E2EDP10_SCREL   :         STRINGA { LENGTH =  2 };
+E2EDP10_NULDT   :         STRINGA { LENGTH =  8, PICTURE = "YYYYMMDD", DEFAULT = "        " };
+E2EDP10_TEART   :         STRINGA { LENGTH =  1 };
+E2EDP10_SOLLFZ  :         STRINGA { LENGTH = 15 };
+E2EDP10_SOLLDT  :         STRINGA { LENGTH =  8, PICTURE = "YYYYMMDD", DEFAULT = "        " };
+E2EDP10_IDNLF   :         STRINGA { LENGTH = 35 };
+E2EDP10_BSTDK   :         STRINGA { LENGTH =  8, PICTURE = "YYYYMMDD", DEFAULT = "        " };
+E2EDP10_LABNK   :         STRINGA { LENGTH = 17 };
+E2EDP10_ABNRA   :         STRINGA { LENGTH = 17 };
+E2EDP10_ABNRD   :         STRINGA { LENGTH =  8, PICTURE = "YYYYMMDD", DEFAULT = "        " };
+E2EDP10_VTRNR   :         STRINGA { LENGTH = 35 };
+E2EDP10_MFRFZ   :         STRINGA { LENGTH = 15 };
+E2EDP10_POSEX   :         STRINGA { LENGTH =  6 };
+
+#---------------------------------------------------------------------------------------------------------------#
+#       E2EDP11000                                                                                              #
+#---------------------------------------------------------------------------------------------------------------#
+
+E2EDP11 { DELIMITER = "\x0a" }:
+        E2EDP11_SEGNAM                  # Segment (externer Name)
+        E2EDP11_SEGNAM2                 # Segment (Version)
+        E2EDP11_SEGNAM3                 # Segment (externer Name)
+        E2EDP11_MANDT                   # Mandant
+        E2EDP11_DOCNUM                  # Nummer des IDocs
+        E2EDP11_SEGNUM                  # Segmentnummer
+        E2EDP11_PSGNUM                  # Nummer des übergeordneten Elternsegments
+        E2EDP11_HLEVEL                  # Hierarchieebene des SAP-Segmentes
+        E2EDP11_DUMMY                   # Dummyfunktion in der Laenge 1
+        REST*
+        ;
+
+E2EDP11_SEGNAM  :  STRINGA { LENGTH =  7, DEFAULT = "E2EDP11" };
+E2EDP11_SEGNAM2 :  STRINGA { LENGTH =  3, DEFAULT = "   " };
+E2EDP11_SEGNAM3 :  STRINGA { LENGTH = 20 };
+E2EDP11_MANDT   :  STRINGA { LENGTH =  3 };
+E2EDP11_DOCNUM  :  STRINGA { LENGTH = 16 };
+E2EDP11_SEGNUM  :  STRINGA { LENGTH =  6 };
+E2EDP11_PSGNUM  :  STRINGA { LENGTH =  6 };
+E2EDP11_HLEVEL  :  STRINGA { LENGTH =  2 };
+E2EDP11_DUMMY   :  STRINGA { LENGTH =  1 };
+
+#---------------------------------------------------------------------------------------------------------------#
+#       E2EDP14000                                                                                              #
+#---------------------------------------------------------------------------------------------------------------#
+
+E2EDP14 { DELIMITER = "\x0a" }:
+        E2EDP14_SEGNAM                  # Segment (externer Name)
+        E2EDP14_SEGNAM2                 # Segment (externer Name)
+        E2EDP14_SEGNAM3                 # Segment (externer Name)
+        E2EDP14_MANDT                   # Mandant
+        E2EDP14_DOCNUM                  # Nummer des IDocs
+        E2EDP14_SEGNUM                  # Segmentnummer
+        E2EDP14_PSGNUM                  # Nummer des übergeordneten Elternsegments
+        E2EDP14_HLEVEL                  # Hierarchieebene des SAP-Segmentes
+        E2EDP14_PCKAR                   # Verpackungsart
+        E2EDP14_PCKNR                   # Packstücknummer des Kunden
+        E2EDP14_ANZPK                   # Anzahl Packstücke
+        E2EDP14_PCKSL                   # Verpackungsart Schlüssel
+        E2EDP14_ANZAR                   # Anzahl Artikel pro Packstück
+        E2EDP14_MAZAR                   # Masseinheit von Art/Packstück
+        E2EDP14_MMPCK                   # Masseinheit für L/B/H Packstück
+        E2EDP14_LPACK                   # Länge Packstück
+        E2EDP14_BPACK                   # Breite Packstück
+        E2EDP14_HPACK                   # Höhe Packstück
+        E2EDP14_MGPCK                   # Masseinheit für Gewicht/Packstück
+        E2EDP14_GPACK                   # Bruttogewicht Packstück
+        E2EDP14_NPACK                   # Nettogewicht Packstück
+        E2EDP14_VPACK                   # Volumen Packstück
+        E2EDP14_GDATV                   # Gültigkeitsdatum Verpackung
+        REST*
+        ;
+
+E2EDP14_SEGNAM  : STRINGA { LENGTH =  7, DEFAULT = "E2EDP14" };
+E2EDP14_SEGNAM2 : STRINGA { LENGTH =  3, DEFAULT = "   " };
+E2EDP14_SEGNAM3 : STRINGA { LENGTH = 20 };
+E2EDP14_MANDT   : STRINGA { LENGTH =   3 };
+E2EDP14_DOCNUM  : STRINGA { LENGTH =  16 };
+E2EDP14_SEGNUM  : STRINGA { LENGTH =   6 };
+E2EDP14_PSGNUM  : STRINGA { LENGTH =   6 };
+E2EDP14_HLEVEL  : STRINGA { LENGTH =   2 };
+E2EDP14_PCKAR   : STRINGA { LENGTH =  35 };
+E2EDP14_PCKNR   : STRINGA { LENGTH =  35 };
+E2EDP14_ANZPK   : STRINGA { LENGTH =  15 };
+E2EDP14_PCKSL   : STRINGA { LENGTH =   2 };
+E2EDP14_ANZAR   : STRINGA { LENGTH =  15 };
+E2EDP14_MAZAR   : STRINGA { LENGTH =   3 };
+E2EDP14_MMPCK   : STRINGA { LENGTH =   3 };
+E2EDP14_LPACK   : STRINGA { LENGTH =   5 };
+E2EDP14_BPACK   : STRINGA { LENGTH =   5 };
+E2EDP14_HPACK   : STRINGA { LENGTH =   5 };
+E2EDP14_MGPCK   : STRINGA { LENGTH =   3 };
+E2EDP14_GPACK   : STRINGA { LENGTH =  11 };
+E2EDP14_NPACK   : STRINGA { LENGTH =  11 };
+E2EDP14_VPACK   : STRINGA { LENGTH =  11 };
+E2EDP14_GDATV   : STRINGA { LENGTH =   8, PICTURE = "YYYYMMDD", DEFAULT = "        "};
+
+#---------------------------------------------------------------------------------------------------------------#
+#       E2EDP15001                                                                                              #
+#---------------------------------------------------------------------------------------------------------------#
+
+E2EDP15 { DELIMITER = "\x0a" }:
+        E2EDP15_SEGNAM                  # Segment (externer Name)
+        E2EDP15_SEGNAM2                 # Segment (externer Name)
+        E2EDP15_SEGNAM3                 # Segment (externer Name)
+        E2EDP15_MANDT                   # Mandant
+        E2EDP15_DOCNUM                  # Nummer des IDocs
+        E2EDP15_SEGNUM                  # Segmentnummer
+        E2EDP15_PSGNUM                  # Nummer des übergeordneten Elternsegments
+        E2EDP15_HLEVEL                  # Hierarchieebene des SAP-Segmentes
+        E2EDP15_TDNAME                  # Textrolle EDI
+        E2EDP15_SPRAS                   # Sprachenschluessel
+        E2EDP15_TXTLF                   # Fortsetzungstext (laufende Nummer)
+        E2EDP15_TXT01                   # Textzeile fortlaufend
+        E2EDP15_TXT02                   # Textzeile fortlaufend
+        E2EDP15_TXT03                   # Textzeile fortlaufend
+        E2EDP15_TXT04                   # Textzeile fortlaufend
+        E2EDP15_TXT05                   # Textzeile fortlaufend
+        E2EDP15_TXT06                   # Textzeile fortlaufend
+        E2EDP15_TXT07                   # Textzeile fortlaufend
+        E2EDP15_TXT08                   # Textzeile fortlaufend
+        E2EDP15_TXT09                   # Textzeile fortlaufend
+        E2EDP15_TXT10                   # Textzeile fortlaufend
+        E2EDP15_TXT11                   # Textzeile fortlaufend
+        E2EDP15_TXT12                   # Textzeile fortlaufend
+        E2EDP15_TXT13                   # Textzeile fortlaufend
+        E2EDP15_TXT14                   # Textzeile fortlaufend
+        E2EDP15_TSSPRAS_ISO             # Sprache nach ISO 639
+        REST*
+        ;
+
+E2EDP15_SEGNAM     :  STRINGA { LENGTH =  7, DEFAULT = "E2EDP15" };
+E2EDP15_SEGNAM2    :  STRINGA { LENGTH =  3, DEFAULT = "001" };
+E2EDP15_SEGNAM3    :  STRINGA { LENGTH = 20 };
+E2EDP15_MANDT      :  STRINGA { LENGTH =  3 };
+E2EDP15_DOCNUM     :  STRINGA { LENGTH = 16 };
+E2EDP15_SEGNUM     :  STRINGA { LENGTH =  6 };
+E2EDP15_PSGNUM     :  STRINGA { LENGTH =  6 };
+E2EDP15_HLEVEL     :  STRINGA { LENGTH =  2 };
+E2EDP15_TDNAME     :  STRINGA { LENGTH =  4 };
+E2EDP15_SPRAS      :  STRINGA { LENGTH =  3 };
+E2EDP15_TXTLF      :  STRINGA { LENGTH =  2 };
+E2EDP15_TXT01      :  STRINGA { LENGTH = 70 };
+E2EDP15_TXT02      :  STRINGA { LENGTH = 70 };
+E2EDP15_TXT03      :  STRINGA { LENGTH = 70 };
+E2EDP15_TXT04      :  STRINGA { LENGTH = 70 };
+E2EDP15_TXT05      :  STRINGA { LENGTH = 70 };
+E2EDP15_TXT06      :  STRINGA { LENGTH = 70 };
+E2EDP15_TXT07      :  STRINGA { LENGTH = 70 };
+E2EDP15_TXT08      :  STRINGA { LENGTH = 70 };
+E2EDP15_TXT09      :  STRINGA { LENGTH = 70 };
+E2EDP15_TXT10      :  STRINGA { LENGTH = 70 };
+E2EDP15_TXT11      :  STRINGA { LENGTH = 70 };
+E2EDP15_TXT12      :  STRINGA { LENGTH = 70 };
+E2EDP15_TXT13      :  STRINGA { LENGTH = 70 };
+E2EDP15_TXT14      :  STRINGA { LENGTH = 70 };
+E2EDP15_TSSPRAS_ISO:  STRINGA { LENGTH =  2 };
+
+#---------------------------------------------------------------------------------------------------------------#
+#       E2EDP16000                                                                                              #
+#---------------------------------------------------------------------------------------------------------------#
+
+E2EDP16 { DELIMITER = "\x0a" }:
+        E2EDP16_SEGNAM                  # Segment (externer Name)
+        E2EDP16_SEGNAM2                 # Segment (externer Name)
+        E2EDP16_SEGNAM3                 # Segment (externer Name)
+        E2EDP16_MANDT                   # Mandant
+        E2EDP16_DOCNUM                  # Nummer des IDocs
+        E2EDP16_SEGNUM                  # Segmentnummer
+        E2EDP16_PSGNUM                  # Nummer des übergeordneten Elternsegments
+        E2EDP16_HLEVEL                  # Hierarchieebene des SAP-Segmentes
+        E2EDP16_ETTYP                   # Einteilungsart EDI
+        E2EDP16_PRGRS                   # Datumstyp des Datums
+        E2EDP16_EDATUV                  # Einteilungsdatum von
+        E2EDP16_EZEIT                   # Abrufzeit
+        E2EDP16_EDATUB                  # Einteilungsdatum bis
+        E2EDP16_ETVTF                   # Einteilungs-Verteilungsfunktion
+        E2EDP16_WMENG                   # Abrufmenge
+        E2EDP16_FZABR                   # Eingangsfortschrittszahl der Einteilung
+        E2EDP16_BSTAS                   # Bedarfsstatus Schlüssel
+        REST*
+        ;
+
+E2EDP16_SEGNAM  :         STRINGA { LENGTH =  7, DEFAULT = "E2EDP16" };
+E2EDP16_SEGNAM2 :         STRINGA { LENGTH =  3, DEFAULT = "   " };
+E2EDP16_SEGNAM3 :         STRINGA { LENGTH = 20 };
+E2EDP16_MANDT   :         STRINGA { LENGTH =  3 };
+E2EDP16_DOCNUM  :         STRINGA { LENGTH = 16 };
+E2EDP16_SEGNUM  :         STRINGA { LENGTH =  6 };
+E2EDP16_PSGNUM  :         STRINGA { LENGTH =  6 };
+E2EDP16_HLEVEL  :         STRINGA { LENGTH =  2 };
+E2EDP16_ETTYP   :         STRINGA { LENGTH =  1 };
+E2EDP16_PRGRS   :         STRINGA { LENGTH =  1 };
+E2EDP16_EDATUV  :         STRINGA { LENGTH =  8, PICTURE="YYYYMMDD" };
+E2EDP16_EZEIT   :         STRINGA { LENGTH =  4, PICTURE="9999", DEFAULT = "    " };
+E2EDP16_EDATUB  :         STRINGA { LENGTH =  8, PICTURE="YYYYMMDD" };
+E2EDP16_ETVTF   :         STRINGA { LENGTH =  2 };
+E2EDP16_WMENG   :         STRINGA { LENGTH = 15 };
+E2EDP16_FZABR   :         STRINGA { LENGTH = 15 };
+E2EDP16_BSTAS   :         STRINGA { LENGTH =  1 };
+
+#---------------------------------------------------------------------------------------------------------------#
+#       E2EDP16a                                                                                                #
+#---------------------------------------------------------------------------------------------------------------#
+
+E2EDP16a { DELIMITER = "\x0a" }:
+        E2EDP16a_SEGNAM                  # Segment (externer Name)
+        E2EDP16a_SEGNAM2                 # Segment (externer Name)
+        E2EDP16a_SEGNAM3                 # Segment (externer Name)
+        E2EDP16a_MANDT                   # Mandant
+        E2EDP16a_DOCNUM                  # Nummer des IDocs
+        E2EDP16a_SEGNUM                  # Segmentnummer
+        E2EDP16a_PSGNUM                  # Nummer des übergeordneten Elternsegments
+        E2EDP16a_HLEVEL                  # Hierarchieebene des SAP-Segmentes
+        E2EDP16a_ETTYP                   # Einteilungsart EDI
+        E2EDP16a_PRGRS                   # Datumstyp des Datums
+        E2EDP16a_EDATUV                  # Einteilungsdatum von
+        E2EDP16a_EZEIT                   # Abrufzeit
+        E2EDP16a_EDATUB                  # Einteilungsdatum bis
+        E2EDP16a_ETVTF                   # Einteilungs-Verteilungsfunktion
+        E2EDP16a_WMENG                   # Abrufmenge
+        E2EDP16a_FZABR                   # Eingangsfortschrittszahl der Einteilung
+        E2EDP16a_BSTAS                   # Bedarfsstatus Schlüssel
+        REST*
+        ;
+
+E2EDP16a_SEGNAM  :         STRINGA { LENGTH =  7, DEFAULT = "E2EDP16" };
+E2EDP16a_SEGNAM2 :         STRINGA { LENGTH =  3, DEFAULT = "   " };
+E2EDP16a_SEGNAM3 :         STRINGA { LENGTH = 20 };
+E2EDP16a_MANDT   :         STRINGA { LENGTH =  3 };
+E2EDP16a_DOCNUM  :         STRINGA { LENGTH = 16 };
+E2EDP16a_SEGNUM  :         STRINGA { LENGTH =  6 };
+E2EDP16a_PSGNUM  :         STRINGA { LENGTH =  6 };
+E2EDP16a_HLEVEL  :         STRINGA { LENGTH =  2 };
+E2EDP16a_ETTYP   :         STRINGA { LENGTH =  1 };
+E2EDP16a_PRGRS   :         STRINGA { LENGTH =  1 };
+E2EDP16a_EDATUV  :         STRINGA { LENGTH =  8, PICTURE="YYYYMMDD" };
+E2EDP16a_EZEIT   :         STRINGA { LENGTH =  4, PICTURE="9999", DEFAULT = "    " };
+E2EDP16a_EDATUB  :         STRINGA { LENGTH =  8, PICTURE="YYYYMMDD" };
+E2EDP16a_ETVTF   :         STRINGA { LENGTH =  2 };
+E2EDP16a_WMENG   :         STRINGA { LENGTH = 15 };
+E2EDP16a_FZABR   :         STRINGA { LENGTH = 15 };
+E2EDP16a_BSTAS   :         STRINGA { LENGTH =  1 };
+
+#---------------------------------------------------------------------------------------------------------------#
+#       Z274K09000                                                                                              #
+#---------------------------------------------------------------------------------------------------------------#
+
+Z274K09 { DELIMITER = "\x0a" }:
+        Z274K09_SEGNAM                  # Segment (externer Name)
+        Z274K09_SEGNAM2                 # Segment (Version)
+        Z274K09_SEGNAM3
+        Z274K09_MANDT                   # Mandant
+        Z274K09_DOCNUM                  # Nummer des IDocs
+        Z274K09_SEGNUM                  # Segmentnummer
+        Z274K09_PSGNUM                  # Nummer des übergeordneten Elternsegments
+        Z274K09_HLEVEL                  # Hierarchieebene des SAP-Segmentes
+        Z274K09_ERGSNR                  # Ergänzende Sachnummer des Kunden
+        Z274K09_LAGKDE                  # Lagerort Kunde
+        Z274K09_ABRVW                   # Auf dem Label zu druckendes Verwendungskennzeichen
+        REST*
+        ;
+
+Z274K09_SEGNAM  : STRINGA { LENGTH =  7, DEFAULT = "Z274K09" };
+Z274K09_SEGNAM2 : STRINGA { LENGTH =  3, DEFAULT = "000" };
+Z274K09_SEGNAM3 : STRINGA { LENGTH = 20 };
+Z274K09_MANDT   : STRINGA { LENGTH =  3 };
+Z274K09_DOCNUM  : STRINGA { LENGTH = 16 };
+Z274K09_SEGNUM  : STRINGA { LENGTH =  6 };
+Z274K09_PSGNUM  : STRINGA { LENGTH =  6 };
+Z274K09_HLEVEL  : STRINGA { LENGTH =  2 };
+Z274K09_ERGSNR  : STRINGA { LENGTH = 35 };
+Z274K09_LAGKDE  : STRINGA { LENGTH = 25 };
+Z274K09_ABRVW   : STRINGA { LENGTH =  3 };
+
