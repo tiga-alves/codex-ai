@@ -15,7 +15,7 @@ The goal is to ensure consistent, traceable, and explainable collaboration betwe
 | **Reviewer Agent** | Human | Performs peer review of mapping accuracy, compliance, and script quality. | Mapping logic, validation logs. | Approval feedback or change requests. |
 | **Integration Agent** | AI | Merges validated mapping logic into production workflow; ensures compatibility. | Approved scripts, SAP/BOSAL mapping tables. | Production-ready transformation component. |
 | **QA/Testing Agent** | Human | Conducts end-to-end test runs with real EDI data. | Compiled executable / script. | Signed-off QA report. |
-
+/
 ---
 
 ## 🧠 2. Agent Role Definitions

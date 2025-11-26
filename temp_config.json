@@ -1,0 +1,13 @@
+{
+  "archiv_key": "JOB ID: 12085525",
+  "override_credat": "20250818",
+  "override_cretim": "124545",
+  "sndprn": "604147",
+  "rcvprn": "PP51",
+  "sndsad": "",
+  "sndlad": "",
+  "rcvsad": "",
+  "rcvlad": "",
+  "force_sysdate_from_docdate": true,
+  "force_systime_from_unb": true
+}
